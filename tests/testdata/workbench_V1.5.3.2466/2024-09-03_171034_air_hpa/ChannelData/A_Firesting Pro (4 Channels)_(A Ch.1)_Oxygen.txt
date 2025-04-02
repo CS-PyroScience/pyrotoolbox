@@ -1,0 +1,32 @@
+#--- Experiment --------------------------------------------------------------------------
+#air_hpa
+#
+#--- System ------------------------------------------------------------------------------
+#Data from PyroScience Workbench V1.5.3.2466   www.pyroscience.com
+#MESSRECHNER2
+#--- Instrument --------------------------------------------------------------------------
+#Device: FSP23 [A] FSPRO-4 SN:20460041 UiD:249BC3015AC9AE27 Firmware:4.11 Build:001
+#--- Channel -----------------------------------------------------------------------------
+#Channel [A Ch.1] - Oxygen Sensor - SA6-530-210 
+#--- Settings & Calibration --------------------------------------------------------------
+#Settings:	Duration	Intensity	Amp	Frequency (Hz)	Crc Enable	Write Lock	Autom. Flash Duration	Autom. Amp Level	Broadcast Interval (ms)	Broadcast Enabled Sensors	Broadcast Options	Analyte	Fiber Type	Fiber Length (mm)	Radio Temp	Temperature (°C)	Opt. Temp. Chan.	Radio Pressure	Pressure (mbar)	Salinity (g/l)
+#	16 ms	10% (A)	5M (200x)	4000	FALSE	FALSE	TRUE	TRUE	0	47	0	oxygen	1 mm	1000	Fixed Temperature ('C)	20.000000	2	Internal Pressure Sensor	1013.000000	7.500000
+#Calibration:	lastCal1	lastCal2	dphi 100% (°)	dphi 0% (°)	f	m	F(Hz)	tt(%/K)	kt(%/K)	Background Amplitude (mV)	Background dphi (°)	mt(1/K)	Tofs(K)	Ksv (1/mbar)	Method	Air Pressure (mbar)	Temperature (°C)	Humidity (%RH)	Temperature (°C) at 0%	Partial Volume of Oxygen (%O2)
+#	03.09.2024	01.01.2001	21.024534	53.000000	0.804000	0.122000	4000	-0.056000	0.969000	0.584349	0.000000	-0.000303	0.000000	0.000000	fixed f	974.023010	25.512600	34.004002	20.000000	20.950000
+#--- Temperature Compensation Channel ----------------------------------------------------
+#Compensation Channel [A Int. T1] - Fixed Temperature
+#Settings: n/a
+#Calibration: n/a
+#--- Pressure Compensation Channel -------------------------------------------------------
+#Compensation Channel [A P1] - Internal Pressure Sensor
+#Settings: n/a
+#Calibration: n/a
+#--- Measurement Data --------------------------------------------------------------------
+Date [A Ch.1 Main]	Time [A Ch.1 Main]	 dt (s) [A Ch.1 Main]	Oxygen (hPa) [A Ch.1 Main]	dphi (°) [A Ch.1 Main]	Signal Intensity (mV) [A Ch.1 Main]	Ambient Light (mV) [A Ch.1 Main]	Status [A Ch.1 Main]	Date [A Ch.1 CompT]	Time [A Ch.1 CompT]	 dt (s) [A Ch.1 CompT]	Fixed Temp (°C) [A Ch.1 CompT]	Status [A Ch.1 CompT]	Date [A Ch.1 CompP]	Time [A Ch.1 CompP]	 dt (s) [A Ch.1 CompP]	Pressure (mbar) [A Ch.1 CompP]	Status [A Ch.1 CompP]
+03-09-2024	17:10:35.350	0.604	212.693	21.035	321	0	OK	03-09-2024	17:10:35.350	0.604	20.000	OK	03-09-2024	17:10:35.350	0.604	974	OK
+03-09-2024	17:10:36.352	1.606	212.712	21.034	321	0	OK	03-09-2024	17:10:36.352	1.606	20.000	OK	03-09-2024	17:10:36.352	1.606	974	OK
+03-09-2024	17:10:37.353	2.606	212.636	21.038	321	0	OK	03-09-2024	17:10:37.353	2.606	20.000	OK	03-09-2024	17:10:37.353	2.606	974	OK
+03-09-2024	17:10:38.354	3.608	212.712	21.034	321	0	OK	03-09-2024	17:10:38.354	3.608	20.000	OK	03-09-2024	17:10:38.354	3.608	974	OK
+03-09-2024	17:10:39.356	4.609	212.712	21.034	321	0	OK	03-09-2024	17:10:39.356	4.609	20.000	OK	03-09-2024	17:10:39.356	4.609	974	OK
+03-09-2024	17:10:40.355	5.609	212.749	21.032	321	0	OK	03-09-2024	17:10:40.355	5.609	20.000	OK	03-09-2024	17:10:40.355	5.609	974	OK
+03-09-2024	17:10:41.355	6.609	212.768	21.031	321	0	OK	03-09-2024	17:10:41.355	6.609	20.000	OK	03-09-2024	17:10:41.355	6.609	974	OK

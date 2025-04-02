@@ -1,0 +1,26 @@
+#--- Experiment --------------------------------------------------------------------------
+#KK399_PyroSci pH Eval 3rd pH4
+#
+#--- System ------------------------------------------------------------------------------
+#Data from PyroScience Workbench V1.0.2.830   www.pyroscience.com
+#CTPC06480.zentrale.local - 192.168.4.126
+#--- Instrument --------------------------------------------------------------------------
+#Device: FireSting pro [A] FSPLUS-4 SN:2466C2065AC97E4B Firmware:4.02 Build:002
+#--- Channel -----------------------------------------------------------------------------
+#Channel [A Ch.1] - pH Sensor - SAG7-350-000
+#--- Settings & Calibration --------------------------------------------------------------
+#Settings:	Duration	Intensity	Amp	Frequency (Hz)	Crc Enable	Write Lock	Autom. Flash Duration	Autom. Amp Level	Broadcast Interval (ms)	Broadcast Enabled Sensors	Broadcast Options	Analyte	Fiber Type	Dual Frequency (Hz)	Radio Temp	Temperature (°C)	Opt. Temp. Chan.	Radio Pressure	Pressure (mbar)	Salinity (g/l)
+#	64 ms	80% (G)	10M (400x)	3000	FALSE	FALSE	TRUE	TRUE	0	47	0	pH	1 mm	0	External Temperature Sensor	20.000	1	Internal Pressure Sensor	1013.000	10.000
+#Calibration:	lastCal1	lastCal2	lastCal3	pka (pH)	slope	dPhi_ref (°)	pka_t (pH/K)	dyn_t (1/K)	bottom_t (1/K)	slope_t (1/K)	f	lambda_std (nm)	pka_is1	pka_is2	bkgdAmpl (mV)	bkgdDphi (°)	offset (pH)	dPhi1 (°)	pH1 (pH)	temp1 (°C)	salinity1 (g/L)	ldev1 (nm)	dPhi2 (°)	pH2 (pH)	temp2 (°C)	salinity2 (g/L)	ldev2 (nm)	Aon	Aoff
+#	11/28/2019	11/28/2019	1/1/2001	7.071	1.037	57.800	-0.010	-0.001	-0.001	0.000	0.040	623.000	2.330	0.250	0.000	0.000	0.000	18.891	4.013	23.670	2.000	624.793	50.115	10.029	23.783	6.500	624.571	0.000	0.000
+#--- Temperature Compensation Channel ----------------------------------------------------
+#Compensation Channel [A T1] - PT100 Temperature Sensor
+#Settings: n/a
+#Calibration: n/a
+#--- Measurement Data --------------------------------------------------------------------
+Date [A Ch.1 Main]	Time [A Ch.1 Main]	 dt (s) [A Ch.1 Main]	pH [A Ch.1 Main]	pH (pH) [A Ch.1 Main]	dphi (°) [A Ch.1 Main]	Signal Intensity (mV) [A Ch.1 Main]	Ambient Light (mV) [A Ch.1 Main]	ldev (nm) [A Ch.1 Main]	Status [A Ch.1 Main]	Date [A Ch.1 CompT]	Time [A Ch.1 CompT]	 dt (s) [A Ch.1 CompT]	Sample Temp. (°C) [A Ch.1 CompT]	Status [A Ch.1 CompT]
+20-12-2019	09:21:57.148	0.018	6.675	6.675	24.292	275	1	624.184	OK	20-12-2019	09:21:57.148	0.018	24.355	OK
+20-12-2019	09:22:27.146	30.017	6.673	6.673	24.267	275	1	624.184	OK	20-12-2019	09:22:27.146	30.017	24.361	OK
+20-12-2019	09:22:57.146	60.017	6.675	6.675	24.306	275	0	624.184	OK	20-12-2019	09:22:57.146	60.017	24.562	OK
+20-12-2019	09:23:27.146	90.016	6.676	6.676	24.326	275	1	624.184	OK	20-12-2019	09:23:27.146	90.016	24.650	OK
+20-12-2019	09:23:57.146	120.016	6.688	6.688	24.442	274	1	624.185	OK	20-12-2019	09:23:57.146	120.016	24.635	OK

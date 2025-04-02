@@ -1,0 +1,18 @@
+FirePlate Workbench Files:
+
+
+File 1) Sauerstoff-Spots und Temperaturspots, alle 96 Kanäle aktiv, Temperaturspots mit Manual Multi Channel Calibration kalibriert, Sauerstoffspots an Luft mit Manual Multi Channel Calibration kalibriert
+
+File 2) Temperaturspots, 12 Kanäle aktiv, 2 Gruppen, Temperaturspots mit Manual Multi Channel Calibration kalibriert
+
+File 3) Sauerstoffsensorspots, 84 Kanäle aktiv, 1 Gruppe, Manual Multi Channel Calibration an Luft
+
+File 4) Sauerstoffsensorspot, 84 Kanäle aktiv, 1 Gruppe, Batch Calibration an Luft
+
+File 5) Sauerstoffsensorspot, 96 Kanäle aktiv, 1 Gruppe,  Manual Multi Channel Calibration an Luft
+
+File 6) Sauerstoffsensorspots, 96 Kanäle aktiv, 4 Gruppen, Batch Calibration für jede Gruppe
+
+
+
+

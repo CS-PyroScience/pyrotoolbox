@@ -1,0 +1,13 @@
+html report
+    x rename
+    CLI
+    generate plots more optional, extract plotting functions, options to add or omit axes
+    x headings
+    x reformat settings and calib tables
+    x statusreport
+    x remove status if = 0
+    plotting for fireplate (animated heatmap)
+
+config.toml erstellen
+new name? -> pyrotoolbox
+unit conversions from hPa.

@@ -1,0 +1,31 @@
+#--- Experiment --------------------------------------------------------------------------
+#File 2
+#
+#--- System ------------------------------------------------------------------------------
+#Data from PyroScience Workbench V1.5.3.2466   www.pyroscience.com
+#VERONIKA
+#--- Instrument --------------------------------------------------------------------------
+#Device: FirePlate-O2 [A] FP96-O2 SN:23220002 UiD:24EB9B03596FCEAB Firmware:4.13 Build:001
+#--- Channel -----------------------------------------------------------------------------
+#Group [A Gr.2] - Optical Temperature Sensor - DE7-300-500 - Well numbers: 1, 9, 14, 22, 27, 35, 40, 48, 53, 66, 79, 92
+#--- Settings & Calibration --------------------------------------------------------------
+#Settings:	Duration	Intensity	Amp	Frequency (Hz)	Crc Enable	Write Lock	Autom. Flash Duration	Autom. Amp Level	Broadcast Interval (ms)	Broadcast Enabled Sensors	Broadcast Options	Analyte	Fiber Type	Fiber Length (mm)	Radio Temp	Temperature (°C)	Opt. Temp. Chan.	Radio Pressure	Pressure (mbar)	Salinity (g/l)
+#	8 ms	40% (E)	10M (400x)	970	FALSE	FALSE	FALSE	TRUE	0	45	0	temperature	1 mm	0	Internal Temperature Sensor	20.000000	1	Internal Pressure Sensor	1013.000000	0.000000
+#Calibration:	WellNr	lastCal1	M	N	C	Tofs (K)	Background Amplitude (mV)	Background dphi (°)
+#	1	04.09.2024	300.000000	500.000000	0.097000	2.158831	0.044110	0.000000
+#	9	04.09.2024	300.000000	500.000000	0.097000	1.431581	0.044110	0.000000
+#	14	04.09.2024	300.000000	500.000000	0.097000	1.996000	0.044110	0.000000
+#	22	04.09.2024	300.000000	500.000000	0.097000	1.738665	0.044110	0.000000
+#	27	04.09.2024	300.000000	500.000000	0.097000	2.076750	0.044110	0.000000
+#	35	04.09.2024	300.000000	500.000000	0.097000	1.415749	0.044110	0.000000
+#	40	04.09.2024	300.000000	500.000000	0.097000	1.643332	0.044110	0.000000
+#	48	04.09.2024	300.000000	500.000000	0.097000	1.317583	0.044110	0.000000
+#	53	04.09.2024	300.000000	500.000000	0.097000	1.565247	0.044110	0.000000
+#	66	04.09.2024	300.000000	500.000000	0.097000	1.751333	0.044110	0.000000
+#	79	04.09.2024	300.000000	500.000000	0.097000	1.359581	0.044110	0.000000
+#	92	04.09.2024	300.000000	500.000000	0.097000	1.236418	0.044110	0.000000
+#--- Measurement Data --------------------------------------------------------------------
+Date [A Gr.2 Main]	Time [A Gr.2 Main]	 dt (s) [A Gr.2 Main]	Optical Temp. (°C) [A Gr.2.1 Main]	dphi (°) [A Gr.2.1 Main]	Signal Intensity (mV) [A Gr.2.1 Main]	Ambient Light (mV) [A Gr.2.1 Main]	Status [A Gr.2.1 Main]	Optical Temp. (°C) [A Gr.2.9 Main]	dphi (°) [A Gr.2.9 Main]	Signal Intensity (mV) [A Gr.2.9 Main]	Ambient Light (mV) [A Gr.2.9 Main]	Status [A Gr.2.9 Main]	Optical Temp. (°C) [A Gr.2.14 Main]	dphi (°) [A Gr.2.14 Main]	Signal Intensity (mV) [A Gr.2.14 Main]	Ambient Light (mV) [A Gr.2.14 Main]	Status [A Gr.2.14 Main]	Optical Temp. (°C) [A Gr.2.22 Main]	dphi (°) [A Gr.2.22 Main]	Signal Intensity (mV) [A Gr.2.22 Main]	Ambient Light (mV) [A Gr.2.22 Main]	Status [A Gr.2.22 Main]	Optical Temp. (°C) [A Gr.2.27 Main]	dphi (°) [A Gr.2.27 Main]	Signal Intensity (mV) [A Gr.2.27 Main]	Ambient Light (mV) [A Gr.2.27 Main]	Status [A Gr.2.27 Main]	Optical Temp. (°C) [A Gr.2.35 Main]	dphi (°) [A Gr.2.35 Main]	Signal Intensity (mV) [A Gr.2.35 Main]	Ambient Light (mV) [A Gr.2.35 Main]	Status [A Gr.2.35 Main]	Optical Temp. (°C) [A Gr.2.40 Main]	dphi (°) [A Gr.2.40 Main]	Signal Intensity (mV) [A Gr.2.40 Main]	Ambient Light (mV) [A Gr.2.40 Main]	Status [A Gr.2.40 Main]	Optical Temp. (°C) [A Gr.2.48 Main]	dphi (°) [A Gr.2.48 Main]	Signal Intensity (mV) [A Gr.2.48 Main]	Ambient Light (mV) [A Gr.2.48 Main]	Status [A Gr.2.48 Main]	Optical Temp. (°C) [A Gr.2.53 Main]	dphi (°) [A Gr.2.53 Main]	Signal Intensity (mV) [A Gr.2.53 Main]	Ambient Light (mV) [A Gr.2.53 Main]	Status [A Gr.2.53 Main]	Optical Temp. (°C) [A Gr.2.66 Main]	dphi (°) [A Gr.2.66 Main]	Signal Intensity (mV) [A Gr.2.66 Main]	Ambient Light (mV) [A Gr.2.66 Main]	Status [A Gr.2.66 Main]	Optical Temp. (°C) [A Gr.2.79 Main]	dphi (°) [A Gr.2.79 Main]	Signal Intensity (mV) [A Gr.2.79 Main]	Ambient Light (mV) [A Gr.2.79 Main]	Status [A Gr.2.79 Main]	Optical Temp. (°C) [A Gr.2.92 Main]	dphi (°) [A Gr.2.92 Main]	Signal Intensity (mV) [A Gr.2.92 Main]	Ambient Light (mV) [A Gr.2.92 Main]	Status [A Gr.2.92 Main]
+04-09-2024	09:39:02.372	0.089	25.808	41.303	353	44	OK	25.729	41.167	371	33	OK	25.788	41.273	384	35	OK	25.707	41.236	445	31	OK	25.778	41.292	422	32	OK	25.698	41.170	479	12	OK	25.763	41.204	420	30	OK	25.729	41.143	450	20	OK	25.866	41.166	324	31	OK	25.828	41.213	497	30	OK	25.781	41.141	314	35	OK	25.685	41.135	322	45	OK
+04-09-2024	09:40:02.381	60.098	25.780	41.309	353	43	OK	25.795	41.153	371	33	OK	25.697	41.292	384	34	OK	25.740	41.229	445	31	OK	25.693	41.310	422	32	OK	25.765	41.156	479	13	OK	25.763	41.204	420	30	OK	25.724	41.144	450	21	OK	25.761	41.188	324	31	OK	25.728	41.234	497	30	OK	25.814	41.134	314	36	OK	25.709	41.130	322	47	OK
+04-09-2024	09:41:02.390	120.107	25.751	41.315	353	43	OK	25.781	41.156	371	33	OK	25.764	41.278	384	34	OK	25.683	41.241	445	31	OK	25.778	41.292	422	32	OK	25.698	41.170	479	12	OK	25.744	41.208	420	30	OK	25.810	41.126	450	21	OK	25.733	41.194	324	31	OK	25.828	41.213	497	30	OK	25.795	41.138	314	35	OK	25.762	41.119	322	45	OK

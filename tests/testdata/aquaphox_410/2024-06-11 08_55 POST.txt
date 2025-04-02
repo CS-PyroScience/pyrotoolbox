@@ -1,0 +1,38 @@
+#Info	Device Log	from Device	manufactured by	PyroScience GmbH
+#Link	https://pyroscience.com
+#Log Name	POST
+#Comment	
+#Device Name	AquapHOx-L-O2
+#DeviceID	12
+#UniqueID	24C53407596FCADA
+#Firmware	410
+#Build	5
+#Number of Channels	1
+#Available Sensors	35
+#Supported Analytes	3
+#Channel	1
+#
+#settings	temp (0.001 °C)	pressure (0.001 mbar)	salinity (0.001 g/L)	duration (1=1ms, 8=128ms)	intensity (0=10%, 7=100%)	amp (3=40x, 4=80x, 5=200x, 6=400x)	frequency (Hz)	crcEnable	writeLock	options (bit0=autoFlashDur., bit1=autoAmpl., bit2=1000xOxygen)	broadcast	analyte (0=none, 1=O2, 2=T, 3=pH, 4=CO2)	fiberType (0=230um, 1=430um, 2=1mm)	dual frequency (Hz)
+#0	-300000	1013000	35000	5	0	5	4000	0	0	3	3080192	1	2	0	0	0	0	0	0	0
+#calibration	dphi0 (0.001 °)	dphi100 (0.001 °)	temp0 (0.001 °C)	temp100 (0.001 °C)	pressure (0.001 mbar)	humidity (0.001 %RH)	f (0.001)	m (0.001)	calFreq (Hz)	tt (10e-5/K)	kt (10e-5/K)	bkgdAmp (0.001 mV)	bkgdDphi (0.001 °)	useKsv	ksv (10e-6/mbar)	ft (10e-6 / K)	mt (10e-6/K)	tempOffset (0.001 °C)	percentO2 (0.001 %O2)
+#1	53819	21834	25051	23457	969000	51000	804	122	4000	-56	969	0	0	0	0	0	-303	0	20950	0	0	0	0	0	0	0	0	0	0	0
+#analogOutput	aoSelectA	aoSelectB	aoSelectC	aoSelectD	aoMinA	aoMinB	aoMinC	aoMinD	aoMaxA	aoMaxB	aoMaxC	aoMaxD
+#4	259	261	265	266	0	0	0	0	250000	50000	2500000	250000
+#temperatureSettings	sensorType	enableAverage	resistorRef (0.001 Ohm)	a (E-10/K)	b (E-11/K)	c (E-13/K)	tempOffset (0.001 °C)	gain
+#20	110100	3	56000000	11000826	23829349	671046	0	1
+#settingsStatus	sensorCodeType	sensorCodeLED	sensorCodePD	sensorCodeMiddleBlock	sensorCodeLastBlock	sensorSerialNumber	backgroundCompensation	fiberLength	medium	unitsGas	unitsWater	activeSensors	sensorName0	sensorName1	sensorName2	sampleInterval	uidTemperature0	uidTemperature1	uidPressure0	uidPressure1	uidSalinity0	uidSalinity1	measValidityTime
+#30	1392508928	0	5	540	205	0	2	0	1	0	0	15	1130901760	0	0	1000	0	0	0	0	0	0	200	0	0
+#calibrationStatus	lastCal1	lastCal2	lastCal3
+#31	532240611	535240611	60000101	0	0	0	0	0
+#loggingStatus	filename0	filename1	filename2	mode	interval	duration	active
+#32	1414745936	805318656	0	1	3	18	0	0	0	0	0	0	0	0	0	0
+#deviceStatus	deviceName0	deviceName1	deviceName2	deviceName3	deviceName4	deviceName5	uidLastConfig0	uidLastConfig1	settingsMode	dimPortLed	slaveAddress
+#34	1097954657	1883787128	759967055	838860800	0	0	0	0	0	1000	1	0	0	0	0	0
+#nonOpticalSensorsStatus	sampleIntervalSampleTemp	meaValTimeSampleTemp	sampleIntervalCaseTemp	meaValTimeCaseTemp	sampleIntervalPressure	meaValTimePressure	sampleIntervalHumidity	meaValTimeHumidity
+#35	0	900	0	900	0	900	0	900	0	0	0	0	0	0	0	0
+#referenceSettings	referenceMode (0=standard, 1=averaging, 2=smart averaging)	refDurationAveragingMode (ms)	refDurationStandardMode (ms)	timeLimitSmartAveragingMode (s)
+#41	2	20	50	10	0	0
+#
+DateTime (YYYY-MM-DD hh:mm:ss)	Fraction of Second (ms)	Comment	status	dphi (0.001 °)	umolar (0.001 umol/L)	mbar (0.001 mbar)	airSat (0.001 %air sat)	tempSample (0.001 °C)	tempCase (0.001 °C)	signalIntensity (0.001 mV)	ambientLight (0.001 mV)	pressure (0.001 mbar)	humidity (0.001 %RH)	resistorTemp (0.001 Ohm or 0.001 mV)	percentO2 (0.001 %O2)	tempOptical (0.001 °C)	pH (0.001 pH)	ldev (0.001 nm)	-	-
+2024-06-11 08:55:19			0	53841	-48	-47	-23	25045	25180	1022562	272	1032601	49373	10246831	-4	0	0	0	0	0
+2024-06-11 08:55:29			0	53842	-51	-49	-24	25042	25200	1022710	361	1032634	49351	10248190	-4	0	0	0	0	0

@@ -1,0 +1,26 @@
+#--- Experiment --------------------------------------------------------------------------
+#getcomplexlogfiles
+#ein versuch möglichst komplizierte logfiles 
+#zu 
+#generieren
+#um meinen parser zu Verbessern!!
+#--- System ------------------------------------------------------------------------------
+#Data from PyroScience Workbench V1.4.8.2380   www.pyroscience.com
+#LAPTOP-KULGA2SD
+#--- Instrument --------------------------------------------------------------------------
+#Device: FSP39 [A] FSPRO-4 SN:24110021 UiD:24EB9B03596FC737 Firmware:4.11 Build:001
+#--- Channel -----------------------------------------------------------------------------
+#Channel [A Ch.2] - pH Sensor - SIF7-505-050 
+#--- Settings & Calibration --------------------------------------------------------------
+#Settings:	Duration	Intensity	Amp	Frequency (Hz)	Crc Enable	Write Lock	Autom. Flash Duration	Autom. Amp Level	Broadcast Interval (ms)	Broadcast Enabled Sensors	Broadcast Options	Analyte	Fiber Type	Fiber Length (mm)	Radio Temp	Temperature (°C)	Opt. Temp. Chan.	Radio Pressure	Pressure (mbar)	Salinity (g/l)
+#	16 ms	60% (F)	10M (400x)	3000	FALSE	FALSE	FALSE	TRUE	0	47	0	pH	1 mm	0	External Temperature Sensor	20.000000	1	Internal Pressure Sensor	1013.000000	7.500000
+#Calibration:	lastCal1	lastCal2	lastCal3	R1	pH1 (pH)	temp1 (°C)	salinity1 (g/L)	R2	pH2 (pH)	temp2 (°C)	salinity2 (g/L)	offset (pH)	dPhi_ref (°)	attenuation coefficient (1/m)	bkgdAmpl (mV)	bkgdDphi (°)	dsf_dye	dtf_dye	pka	slope	bottom_t	top_t	slope_t	pka_t	pka_is1	pka_is2
+#	01/01/2001	01/01/2001	01/01/2001	1.600000	0.000000	20.000000	7.500000	0.100000	14.000000	20.000000	7.500000	0.000000	57.800000	0.033900	0.044110	0.000000	0.904700	-0.005670	8.031010	1.034000	-0.001108	-0.000803	0.000000	-0.016280	0.969700	0.126300
+#--- Temperature Compensation Channel ----------------------------------------------------
+#Compensation Channel [A T1] - PT100 Temperature Sensor - Calibration offset = 0.00°C
+#Settings: n/a
+#Calibration: n/a
+#--- Measurement Data --------------------------------------------------------------------
+Date [A Ch.2 Main]	Time [A Ch.2 Main]	 dt (s) [A Ch.2 Main]	pH [A Ch.2 Main]	pH (pH) [A Ch.2 Main]	dphi (°) [A Ch.2 Main]	Signal Intensity (mV) [A Ch.2 Main]	Ambient Light (mV) [A Ch.2 Main]	R [A Ch.2 Main]	Status [A Ch.2 Main]	Date [A Ch.2 CompT]	Time [A Ch.2 CompT]	 dt (s) [A Ch.2 CompT]	Sample Temp. (°C) [A Ch.2 CompT]	Status [A Ch.2 CompT]
+01-07-2024	13:38:31.426	0.379	>9.5	>9.5	177.476	1	43	-19.3817	NotOK(5,13,14)	01-07-2024	13:38:31.426	0.379	NaN	NotOK(5,5)
+01-07-2024	13:39:01.096	30.049	>9.5	>9.5	177.571	1	43	-20.1138	NotOK(5,13,14)	01-07-2024	13:39:01.096	30.049	NaN	NotOK(5,5)

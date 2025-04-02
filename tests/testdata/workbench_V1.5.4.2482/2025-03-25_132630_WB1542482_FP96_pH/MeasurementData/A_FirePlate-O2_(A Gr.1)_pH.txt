@@ -1,0 +1,29 @@
+#--- Experiment --------------------------------------------------------------------------
+#WB1542482_FP96_pH
+#
+#--- System ------------------------------------------------------------------------------
+#Data from PyroScience Workbench V1.5.4.2482   www.pyroscience.com
+#LAPTOP-8D1J5NP9
+#--- Instrument --------------------------------------------------------------------------
+#Device: FirePlate-PRO [A] FP96-O2 SN:0 UiD:2411E508596FCF60 Firmware:4.13 Build:001
+#--- Channel -----------------------------------------------------------------------------
+#Group [A Gr.1] - pH Sensor - SGG7-319-335 - Well numbers: A11, B11
+#--- Settings & Calibration --------------------------------------------------------------
+#Settings:	Duration	Intensity	Amp	Frequency (Hz)	Crc Enable	Write Lock	Autom. Flash Duration	Autom. Amp Level	Broadcast Interval (ms)	Broadcast Enabled Sensors	Broadcast Options	Analyte	Fiber Type	Fiber Length (mm)	Radio Temp	Temperature (°C)	Opt. Temp. Chan.	Radio Pressure	Pressure (mbar)	Salinity (g/l)
+#	8 ms	80% (G)	10M (400x)	3000	FALSE	FALSE	FALSE	TRUE	0	45	0	pH	1 mm	0	Internal Temperature Sensor	20.000000	2	Internal Pressure Sensor	1013.000000	7.500000
+#Calibration:WellNr		lastCal1	lastCal2	lastCal3	R1	pH1 (pH)	temp1 (°C)	salinity1 (g/L)	R2	pH2 (pH)	temp2 (°C)	salinity2 (g/L)	offset (pH)	dPhi_ref (°)	attenuation coefficient (1/m)	bkgdAmpl (mV)	bkgdDphi (°)	dsf_dye	dtf_dye	pka	slope	bottom_t	top_t	slope_t	pka_t	pka_is1	pka_is2
+#A11/t#	25/03/2025	01/01/2001	01/01/2001	1.600335	2.280558	23.248999	2.000000	0.070000	14.000000	20.000000	7.500000	0.000000	57.800000	0.035930	0.044110	0.000000	0.990400	-0.006321	7.012626	1.048000	-0.007805	-0.001540	0.000000	-0.008985	2.330000	0.250000
+#B11/t#	25/03/2025	01/01/2001	01/01/2001	0.998330	2.280558	23.248999	2.000000	0.070000	14.000000	20.000000	7.500000	0.000000	57.800000	0.035930	0.044110	0.000000	0.990400	-0.006321	7.012626	1.048000	-0.007805	-0.001540	0.000000	-0.008985	2.330000	0.250000
+#--- Temperature Compensation Channel ----------------------------------------------------
+#Compensation Channel [A Int. T1] - Internal Temperature Sensor
+#Settings: n/a
+#Calibration: n/a
+#--- Measurement Data --------------------------------------------------------------------
+Date [A Gr.1 Main]	Time [A Gr.1 Main]	 dt (s) [A Gr.1 Main]	pH [A Gr.1.A11 Main]	pH (pH) [A Gr.1.A11 Main]	dphi (°) [A Gr.1.A11 Main]	Signal Intensity (mV) [A Gr.1.A11 Main]	Ambient Light (mV) [A Gr.1.A11 Main]	R [A Gr.1.A11 Main]	Status [A Gr.1.A11 Main]	pH [A Gr.1.B11 Main]	pH (pH) [A Gr.1.B11 Main]	dphi (°) [A Gr.1.B11 Main]	Signal Intensity (mV) [A Gr.1.B11 Main]	Ambient Light (mV) [A Gr.1.B11 Main]	R [A Gr.1.B11 Main]	Status [A Gr.1.B11 Main]	Date [A Gr.1.%s CompT]	Time [A Gr.1.%s CompT]	 dt (s) [A Gr.1.%s CompT]	Case Temp. (°C) [A Gr.1.%s CompT]	Status [A Gr.1.%s CompT]
+25-03-2025	13:26:31.413	1.098	7.049	7.049	33.017	616	22	0.7761	OK	6.947	6.947	38.134	583	22	0.5498	OK	25-03-2025	13:26:31.413	1.098	23.600	OK
+25-03-2025	13:26:36.518	6.204	7.053	7.053	33.092	615	22	0.7724	OK	6.952	6.952	38.202	583	23	0.5472	OK	25-03-2025	13:26:36.518	6.204	23.600	OK
+25-03-2025	13:26:41.531	11.217	7.057	7.057	33.148	613	22	0.7696	OK	6.955	6.955	38.241	582	22	0.5456	OK	25-03-2025	13:26:41.531	11.217	23.600	OK
+25-03-2025	13:26:46.544	16.230	7.059	7.059	33.194	612	22	0.7673	OK	6.960	6.960	38.308	581	22	0.5430	OK	25-03-2025	13:26:46.544	16.230	23.600	OK
+25-03-2025	13:26:51.646	21.332	7.063	7.063	33.252	611	22	0.7644	OK	6.962	6.962	38.334	580	23	0.5420	OK	25-03-2025	13:26:51.646	21.332	23.600	OK
+25-03-2025	13:26:56.659	26.345	7.066	7.066	33.311	610	22	0.7614	OK	6.966	6.966	38.388	580	22	0.5399	OK	25-03-2025	13:26:56.659	26.345	23.620	OK
+25-03-2025	13:27:01.765	31.450	7.069	7.069	33.348	609	22	0.7596	OK	6.971	6.971	38.448	579	23	0.5376	OK	25-03-2025	13:27:01.765	31.450	23.600	OK
