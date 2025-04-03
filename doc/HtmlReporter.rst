@@ -1,5 +1,5 @@
 PyroHtmlReporter
-============
+=================
 
 *PyroHtmlReporter is still in active development. Anything might change!*
 

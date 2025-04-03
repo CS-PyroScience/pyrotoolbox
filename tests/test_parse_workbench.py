@@ -816,5 +816,118 @@ class TestWorkbench_1_5_3_2466(unittest.TestCase):
                               df.iloc[1].to_dict().items()})
 
 
+class TestWorkbench_1_5_4_2482(unittest.TestCase):
+    directory = script_dir + '/testdata/workbench_V1.5.4.2482/'
+
+    def test_load_f1(self):
+        file1 = '2025-03-24_154458_Test_WB1452482/MeasurementData/A_Firesting Pro (4 Channels)_(A Ch.1)_Oxygen.txt'
+        df, m = read_workbench(self.directory + file1)
+        self.assertEqual({'experiment_name': 'Test_WB1452482', 'experiment_description': '\n',
+                          'software_version': 'Workbench V1.5.4.2482', 'device': 'FireSting-PRO [A] FSPRO-4',
+                          'device_serial': '23390005', 'uid': '241642085AC9AE27', 'firmware': '4.11:001', 'channel': 1,
+                          'sensor_code': 'XA6-539-212',
+                          'settings': {'duration': '16 ms', 'intensity': '10%', 'amp': '200x', 'frequency': 4000,
+                                       'crc_enable': False, 'write_lock': False, 'auto_flash_duration': True,
+                                       'auto_amp': True, 'analyte': 'oxygen', 'fiber_type': '1 mm',
+                                       'temperature': 'external sensor', 'pressure': 'internal sensor',
+                                       'salinity': 7.5, 'fiber_length_mm': 2000},
+                          'calibration': {'date_calibration_high': datetime.datetime(2025, 3, 24, 0, 0),
+                                          'date_calibration_zero': datetime.datetime(2025, 3, 24, 0, 0),
+                                          'dphi100': 21.829, 'dphi0': 52.434, 'f': 0.804, 'm': 0.09568, 'freq': 4000.0,
+                                          'tt': -0.000817, 'kt': 0.00969, 'bkgdAmpl': 0.900368,
+                                          'bkgdDphi': 0.0, 'mt': -6e-06, 'pressure': 993.949, 'temp100': 24.203,
+                                          'humidity': 29.871, 'temp0': 24.283, 'percentO2': 20.95}},
+                         m)
+        self.assertEqual(['time_s', 'oxygen_hPa', 'dphi', 'signal_intensity', 'ambient_light',
+                          'status', 'sample_temperature', 'pressure'], list(df.columns))
+        self.assertEqual(212, len(df))
+        self.assertDictEqual(
+            {'time_s': 1.076, 'oxygen_hPa': 206.078, 'dphi': 21.834, 'signal_intensity': 176.0, 'ambient_light': 0.0,
+             'status': 0.0, 'sample_temperature': 24.279, 'pressure': 994.0},
+            {k: np.nan if np.isnan(v) else v for k, v in df.iloc[1].to_dict().items()})
+
+    def test_load_f2(self):
+        file1 = '2025-03-24_154458_Test_WB1452482/MeasurementData/A_Firesting Pro (4 Channels)_(A Ch.2)_OpticalTemp.txt'
+        df, m = read_workbench(self.directory + file1)
+        self.assertEqual({'experiment_name': 'Test_WB1452482', 'experiment_description': '\n',
+                          'software_version': 'Workbench V1.5.4.2482', 'device': 'FireSting-PRO [A] FSPRO-4',
+                          'device_serial': '23390005', 'uid': '241642085AC9AE27', 'firmware': '4.11:001', 'channel': 2,
+                          'sensor_code': 'DG6-316-543',
+                          'settings': {'duration': '128 ms', 'intensity': '80%', 'amp': '200x', 'frequency': 970,
+                                       'crc_enable': False, 'write_lock': False, 'auto_flash_duration': True,
+                                       'auto_amp': True, 'analyte': 'temperature', 'fiber_type': '1 mm',
+                                       'temperature': 'internal sensor', 'pressure': 'internal sensor', 'salinity': 0.0,
+                                       'fiber_length_mm': 1000},
+                          'calibration': {'date_calibration_offset': datetime.datetime(2025, 3, 24, 0, 0), 'M': 316.0,
+                                          'N': 543.0, 'C': 0.097, 'temp_offset': 0.261797, 'bkgdAmpl': 0.584349,
+                                          'bkgdDphi': 0.0}},
+                         m)
+        self.assertEqual(['time_s', 'optical_temperature', 'dphi', 'signal_intensity', 'ambient_light', 'status'],
+                         list(df.columns))
+        self.assertEqual(212, len(df))
+        self.assertDictEqual(
+            {'time_s': 1.177, 'optical_temperature': 24.295, 'dphi': 41.43, 'signal_intensity': 240.0,
+             'ambient_light': 0.0, 'status': 0.0},
+            {k: np.nan if np.isnan(v) else v for k, v in df.iloc[1].to_dict().items()})
+
+    def test_load_f3(self):
+        file1 = '2025-03-24_154458_Test_WB1452482/MeasurementData/A_Firesting Pro (4 Channels)_(A Ch.3)_pH.txt'
+        df, m = read_workbench(self.directory + file1)
+        self.assertEqual({'experiment_name': 'Test_WB1452482', 'experiment_description': '\n',
+                          'software_version': 'Workbench V1.5.4.2482', 'device': 'FireSting-PRO [A] FSPRO-4',
+                          'device_serial': '23390005', 'uid': '241642085AC9AE27', 'firmware': '4.11:001', 'channel': 3,
+                          'sensor_code': 'XGF7-594-838',
+                          'settings': {'duration': '16 ms', 'intensity': '60%', 'amp': '400x', 'frequency': 3000,
+                                       'crc_enable': False, 'write_lock': False, 'auto_flash_duration': False,
+                                       'auto_amp': True, 'analyte': 'pH', 'fiber_type': '1 mm',
+                                       'temperature': 'external sensor', 'pressure': 'internal sensor', 'salinity': 7.5,
+                                       'fiber_length_mm': 1000},
+                          'calibration': {'date_calibration_acid': datetime.datetime(2025, 3, 24, 0, 0),
+                                          'date_calibration_base': datetime.datetime(2025, 3, 24, 0, 0),
+                                          'date_calibration_offset': datetime.datetime(2025, 3, 24, 0, 0), 'R1': 1.4899,
+                                          'pH1': 2.291319, 'temp1': 22.0, 'salinity1': 2.0, 'R2': 0.093418,
+                                          'pH2': 11.19567, 'temp2': 24.200899, 'salinity2': 6.0, 'offset': -0.048151,
+                                          'dphi_ref': 57.8, 'attenuation_coefficient': 0.03593, 'bkgdAmpl': 0.584349,
+                                          'bkgdDphi': 0.0, 'dsf_dye': 0.9904, 'dtf_dye': -0.006321, 'pka': 7.069192,
+                                          'slope': 1.048, 'bottom_t': -0.007805, 'top_t': -0.00154, 'slope_t': 0.0,
+                                          'pka_t': -0.008985, 'pka_is1': 2.33, 'pka_is2': 0.25}},
+                         m)
+        self.assertEqual(
+            ['time_s', 'pH', 'dphi', 'signal_intensity', 'ambient_light', 'R', 'status', 'sample_temperature'],
+            list(df.columns))
+        self.assertEqual(22, len(df))
+        self.assertDictEqual(
+            {'time_s': 10.077, 'pH': 7.177, 'dphi': 36.422, 'signal_intensity': 105.0, 'ambient_light': 0.0, 'R': 0.642,
+             'status': 0.0, 'sample_temperature': 24.283},
+            {k: np.nan if np.isnan(v) else v for k, v in df.iloc[1].to_dict().items()})
+
+    def test_load_f4(self):
+        file1 = '2025-03-24_154458_Test_WB1452482/MeasurementData/A_Firesting Pro (4 Channels)_(A Ch.4)_Oxygen.txt'
+        df, m = read_workbench(self.directory + file1)
+        self.assertEqual({'experiment_name': 'Test_WB1452482', 'experiment_description': '\n',
+                          'software_version': 'Workbench V1.5.4.2482', 'device': 'FireSting-PRO [A] FSPRO-4',
+                          'device_serial': '23390005', 'uid': '241642085AC9AE27', 'firmware': '4.11:001', 'channel': 4,
+                          'sensor_code': 'SC7-530-209',
+                          'settings': {'duration': '16 ms', 'intensity': '20%', 'amp': '400x', 'frequency': 4000,
+                                       'crc_enable': False, 'write_lock': False, 'auto_flash_duration': True,
+                                       'auto_amp': True, 'analyte': 'oxygen', 'fiber_type': '1 mm',
+                                       'temperature': 'external sensor', 'pressure': 'internal sensor', 'salinity': 7.5,
+                                       'fiber_length_mm': 1000},
+                          'calibration': {'date_calibration_high': datetime.datetime(2025, 3, 24, 0, 0),
+                                          'date_calibration_zero': None, 'dphi100': 21.776, 'dphi0': 53.0, 'f': 0.804,
+                                          'm': 0.09568, 'freq': 4000.0, 'tt': -0.000817, 'kt': 0.00969,
+                                          'bkgdAmpl': 0.584349, 'bkgdDphi': 0.0, 'mt': -6e-06, 'pressure': 993.907,
+                                          'temp100': 22.0, 'humidity': 100.0, 'temp0': 20.0, 'percentO2': 20.95}},
+                         m)
+        self.assertEqual(
+            ['time_s', 'oxygen_%airsat', 'dphi', 'signal_intensity', 'ambient_light', 'status', 'sample_temperature',
+             'pressure'], list(df.columns))
+        self.assertEqual(213, len(df))
+        self.assertDictEqual(
+            {'time_s': 1.373, 'oxygen_%airsat': 97.897, 'dphi': 21.781, 'signal_intensity': 245.0, 'ambient_light': 1.0,
+             'status': 0.0, 'sample_temperature': 24.278, 'pressure': 994.0},
+            {k: np.nan if np.isnan(v) else v for k, v in df.iloc[1].to_dict().items()})
+
+
 if __name__ == '__main__':
     unittest.main()

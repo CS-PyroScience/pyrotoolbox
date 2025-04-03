@@ -24,18 +24,18 @@ expect these naming conventions.
 """
 
 import glob
-import os
-import pickle
+import sys
+
 import pandas as pd
 import numpy as np
 import re
 from dateutil import parser as duparser
 import datetime as dt
-version = 0.45
 
-# UID_TO_NAME_DICT = { '243B1F055AC97A89': 'FSP1', '24E144075AC97E03': 'FSP3', '24E144075AC97E7A': 'FSP4', '24E144075AC97E27': 'FSP8', '2466C2065AC97DF7': 'FSP9', '247AA5045AC97E62': 'FSP14', '249BC3015AC980E1': 'FSP15', '24E144015D6519F5': 'FSP18', '2466C2055D64A687': 'FSP19', '247AA5035D64A770': 'FSP20', '247475085D64AD11': 'FSP21', '249BC3015AC9AE27': 'FSP23', '2466C2065AC97E7A': 'FSP24', '249BC3015AC97E03': 'FSP25', '2411E508596FD389': 'FSP28', '24EB9B03596FD517': 'FSP29', '247AA50559C60795': 'FSP31', '2411E508596FD743': 'FSP32', '24C53407596FD8DF': 'FSP33', '24EB9B03596FD090': 'FSP34', }
+# Current software-versions. Used to display warnings if a newer logfiles is loaded.
+CURRENT_WORKBENCH_VERSION = '1.5.3'
+CURRENT_DEVELOPERTOOL_VERSION = '162'
 
-# load and parse FireSting (Workbench) files
 
 def parse(fname: str) -> tuple[pd.DataFrame, dict]:
     """ Reads any pyroscience textfile. Not .pyr files! Returns a dataframe and a dict with metadata.
@@ -81,7 +81,7 @@ def read_workbench(fname: str) -> (pd.DataFrame, dict):
     l = 0
     # get experiment notes
     if not '--- Experiment ---' in lines[0]:
-        print('Warning: Experiment section not found in logfile')
+        print('Warning: Experiment section not found in logfile', file=sys.stderr)
     else:
         metadata['experiment_name'] = lines[1]
         l = 2
@@ -97,6 +97,8 @@ def read_workbench(fname: str) -> (pd.DataFrame, dict):
     if not match:
         raise ValueError('Unable to parse Workbench version!')
     metadata['software_version'] = match.groups()[0]
+    if metadata['software_version'].rsplit(maxsplit=1)[-1][1:6] > CURRENT_WORKBENCH_VERSION:
+        print('Warning! Unknown Workbench version! Please update pyrotoolbox.', file=sys.stderr)
     l += 3
     # get instrument data
     if not '--- Instrument ---' in lines[l]:
@@ -145,8 +147,6 @@ def read_workbench(fname: str) -> (pd.DataFrame, dict):
                                                                lines[l+3], lines[l+4])
 
         l += 5
-
-    metadata['parser_version'] = version
 
     # get header count
     header = 0
@@ -279,14 +279,14 @@ def _parse_workbench_settings(line1: str, line2: str) -> dict:
     elif d['Radio Temp'] in ('Fixed', 'Fixed Temperature (\'C)'):
         temperature = float(d['Temperature (°C)'])
     else:
-        print('unknown temperature setting: ', d['Radio Temp'])
+        print('unknown temperature setting: ', d['Radio Temp'], file=sys.stderr)
         temperature = 'unknown'
     if d['Radio Pressure'] == 'Internal Pressure Sensor':  # TODO testen was wirklich bei fixed und ambient hier reingeschrieben wird
         pressure = 'internal sensor'
     elif d['Radio Pressure'] == 'Fixed Pressure (mbar)':
         pressure = float(d['Pressure (mbar)'])
     else:
-        print('unknown pressure setting', d['Radio Pressure'])
+        print('unknown pressure setting', d['Radio Pressure'], file=sys.stderr)
         pressure = 'unknown'
 
     r = {'duration': d['Duration'],
@@ -389,14 +389,14 @@ def _parse_workbench_calibration(analyte: str, line1: str, line2: str) -> dict:
     elif analyte == 'none':
         rename_dict = {}
     else:
-        print('Warning! Unknown analyte. Please update!')
+        print('Warning! Unknown analyte. Please update!', file=sys.stderr)
         return {}
     for name, value in zip(line1.split('\t')[1:], line2.split('\t')[1:]):
         if name in rename_dict:
             name = rename_dict[name]
         else:
             if name not in ('Ksv (1/mbar)', 'Method', 'Tofs(K)', 'WellNr'):
-                print(f'skipping {name}. value: {value}')
+                print(f'skipping {name}. value: {value}', file=sys.stderr)
             continue
         if name.startswith('date_calibration'):
             if value in ('01/01/2001', '01.01.2001', '01.01.2000', 'Not calibrated'):
@@ -418,6 +418,9 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
     :param fname: path to the lofile
     :return: DataFrame, metadata-dict
     """
+    def channel_number_to_coordinate(channel: int):
+        return 'ABCDEFGH'[(channel - 1)//12] + f'{(channel - 1) % 12 + 1:0>2}'
+
     # first load header lines
     lines = []
     with open(fname, 'r', encoding='latin1') as f:
@@ -432,7 +435,7 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
     l = 0
     # get experiment notes
     if not '--- Experiment ---' in lines[0]:
-        print('Warning: Experiment section not found in logfile')
+        print('Warning: Experiment section not found in logfile', file=sys.stderr)
     else:
         metadata['experiment_name'] = lines[1]
         l = 2
@@ -470,7 +473,7 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
     channel, sensor_type, sensor_code, well_numbers = match.groups()
     metadata['group'] = int(channel)
     metadata['sensor_code'] = sensor_code.strip()
-    metadata['channels'] = [int(i) for i in well_numbers.split(',')]
+    metadata['channels'] = [channel_number_to_coordinate(int(i)) for i in well_numbers.split(',')]
 
     l += 2
     if sensor_type not in ('pH Sensor', 'Oxygen Sensor', 'Optical Temperature Sensor'):
@@ -487,8 +490,6 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
                                                            lines[l+3], lines[l+4+i])
 
     l += 5 + i
-
-    metadata['parser_version'] = version
 
     # get header count
     header = 0
@@ -521,7 +522,7 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
 
         col, info = column.split(' [')
         channel = int(info[:-6].rsplit('.')[-1])
-        channel_name = 'ABCDEFGH'[(channel - 1)//12] + f'{(channel - 1) % 12 + 1:0>2}'
+        channel_name = channel_number_to_coordinate(channel)
         name = {'Date_time': 'date_time',
                             'dt (s)': 'time_s',
                             'Oxygen (%O2)': 'oxygen_%O2',
@@ -581,8 +582,6 @@ def read_developertool(fname: str) -> (pd.DataFrame, dict):
     :param fname: path to the logfile
     :return: (DataFrame, metadata-dict)
     """
-
-    # parse simple logger logfile
     # first load header lines
     lines = []
     with open(fname, 'r', encoding='latin1') as f:
@@ -594,7 +593,9 @@ def read_developertool(fname: str) -> (pd.DataFrame, dict):
     metadata = {}
     # get experiment notes
     metadata['software_version'] = lines[0].split('\t',maxsplit=1)[1]
-    #metadata['developertool_version'] = lines[0].split('\t')[2]
+
+    if metadata['software_version'].split()[1][1:] > CURRENT_DEVELOPERTOOL_VERSION:
+        print(f'Warning! Unknown DeveloperTool version "{metadata["software_version"]}"! Please update pyrotoolbox.', file=sys.stderr)
 
     metadata['experiment_name'] = lines[2].split('\t', maxsplit=1)[1]
     metadata['experiment_description'] = lines[3].split('\t', maxsplit=1)[1]
@@ -610,15 +611,11 @@ def read_developertool(fname: str) -> (pd.DataFrame, dict):
     # parse calibration
     metadata['calibration'] = _parse_developertool_calibration(metadata['settings']['analyte'], lines[16], lines[17])
 
-    # TODO temp settings? tempOffset ist das einzige interessante
-
     # parse referenceSettings
     metadata['settings'].update(_parse_developertool_ref_settings(lines[20], lines[21]))
 
     # parse calibration status
     metadata['calibration'].update(_parse_developertool_calibration_status(metadata['settings']['analyte'], lines[23]))
-
-    metadata['parser_version'] = version
 
     # get header count
     header = 0
@@ -657,9 +654,6 @@ def read_developertool(fname: str) -> (pd.DataFrame, dict):
         usecols = [0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 13]
     else:
         raise ValueError(f'Unknown analyte "{metadata["settings"]["analyte"]}". Please update software.')
-
-    # necessary because 1000 can be in "Fraction of second" column.
-    #specialparser = lambda x: dt.datetime.strptime(x[:-4] + '999' if x.endswith('1000') else x, '%Y-%m-%d %H:%M:%S %f')
 
     df = pd.read_csv(fname, skiprows=header, encoding='latin1', usecols=usecols, sep='\t', skip_blank_lines=False,
                      na_values=['-300000'], dtype={'Comment': 'object'})
@@ -869,14 +863,14 @@ def _parse_developertool_calibration(analyte: str, line1: str, line2: str) -> di
     elif analyte == 'none':
         rename_dict = {}
     else:
-        print(f'Warning! Unknown analyte: "{analyte}". Please update!')
+        print(f'Warning! Unknown analyte: "{analyte}". Please update!', file=sys.stderr)
         return {}
     for name, value in zip(line1.split('\t')[1:], line2.split('\t')[1:]):
         if name in rename_dict:
             name, factor = rename_dict[name]
         else:
             if name not in ('useKsv', 'ksv (10e-6/mbar)', '-', 'tempOffset (0.001 °C)'):
-                print(f'skipping {name}. value: {value}')
+                print(f'skipping {name}. value: {value}', file=sys.stderr)
             continue
         value = round(float(value)/factor, 6)
         calibration[name] = value
@@ -913,7 +907,7 @@ def _parse_developertool_calibration_status(analyte: str, line2: str) -> dict:
     elif analyte == 'none':
         calibration_points = []
     else:
-        print(f'Warning! Unknown analyte "{analyte}". Please update!')
+        print(f'Warning! Unknown analyte "{analyte}". Please update!', file=sys.stderr)
         return {}
 
     d = {}
@@ -996,7 +990,6 @@ def read_aquaphoxlogger(fname: str) -> (pd.DataFrame, dict):
 
     metadata = {}
     # get experiment notes
-    #metadata['simplelogger_version'] = lines[0].split('\t')[2]
 
     metadata['experiment_name'] = lines[2].split('\t', maxsplit=1)[1]
     metadata['experiment_description'] = lines[3].split('\t', maxsplit=1)[1]
@@ -1028,8 +1021,6 @@ def read_aquaphoxlogger(fname: str) -> (pd.DataFrame, dict):
         # parse referenceSettings
         metadata['settings'].update(_parse_developertool_ref_settings(lines[20], lines[21]))
 
-
-    metadata['parser_version'] = version
 
     # get header count
     header = 0
@@ -1122,9 +1113,6 @@ def read_fsgo2(fname: str) -> (pd.DataFrame, dict):
                 break
 
     metadata = {}
-    # get experiment notes
-    #metadata['simplelogger_version'] = lines[0].split('\t')[2]
-
     metadata['experiment_name'] = lines[0].split('\t', maxsplit=1)[1]
     metadata['experiment_description'] = lines[1].split('\t', maxsplit=1)[1]
 
@@ -1198,7 +1186,7 @@ def read_fsgo2(fname: str) -> (pd.DataFrame, dict):
         elif k in ('calFreq', 'useKsv', 'ksv', 'not used'):
             continue
         else:
-            print(f'skipping calibration parameter {k}. value: {v}')
+            print(f'skipping calibration parameter {k}. value: {v}', file=sys.stderr)
     metadata['calibration'] = calibration
 
     # parse calibration status
@@ -1215,9 +1203,6 @@ def read_fsgo2(fname: str) -> (pd.DataFrame, dict):
                 metadata['calibration']['date_calibration_zero'] = None
             else:
                 metadata['calibration']['date_calibration_zero'] = duparser.parse(v, dayfirst=True)
-
-    metadata['parser_version'] = version
-
 
     # get header count
     header = 14
