@@ -4653,5 +4653,11 @@ class TestWorkbench_1_5_3_2466(unittest.TestCase):
             , {k: np.nan if np.isnan(v) else v for k, v in df.iloc[1].to_dict().items()})
 
 
+class TestWorkbench_1_5_4_2482(unittest.TestCase):
+    directory = script_dir + '/testdata/fireplate_workbench_V1.5.4.2482/'
+
+    def test_load_f1(self):
+        pass
+
 if __name__ == '__main__':
     unittest.main()

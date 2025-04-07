@@ -418,8 +418,22 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
     :param fname: path to the lofile
     :return: DataFrame, metadata-dict
     """
-    def channel_number_to_coordinate(channel: int):
-        return 'ABCDEFGH'[(channel - 1)//12] + f'{(channel - 1) % 12 + 1:0>2}'
+    def channel_number_to_coordinate(channel: str):
+        """ Converts either '1' or 'A1' to 'A01'
+        """
+        channel = channel.strip()
+        try:  # works for Workbench > 1.5.4
+            channel = int(channel)
+            return 'ABCDEFGH'[(channel - 1)//12] + f'{(channel - 1) % 12 + 1:0>2}'
+        except:
+            pass
+        if len(channel) == 3:
+            return channel
+        elif len(channel) == 2:
+            return channel[0] + '0' + channel[1]
+        else:
+            raise ValueError(f'Invalid channel name "{channel}"')
+
 
     # first load header lines
     lines = []
@@ -473,7 +487,7 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
     channel, sensor_type, sensor_code, well_numbers = match.groups()
     metadata['group'] = int(channel)
     metadata['sensor_code'] = sensor_code.strip()
-    metadata['channels'] = [channel_number_to_coordinate(int(i)) for i in well_numbers.split(',')]
+    metadata['channels'] = [channel_number_to_coordinate(i) for i in well_numbers.split(',')]
 
     l += 2
     if sensor_type not in ('pH Sensor', 'Oxygen Sensor', 'Optical Temperature Sensor'):
@@ -521,7 +535,7 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
             return 'case_temperature'
 
         col, info = column.split(' [')
-        channel = int(info[:-6].rsplit('.')[-1])
+        channel = info[:-6].rsplit('.')[-1]
         channel_name = channel_number_to_coordinate(channel)
         name = {'Date_time': 'date_time',
                             'dt (s)': 'time_s',
