@@ -251,6 +251,38 @@ class TestDeveloperTool_v162(unittest.TestCase):
        'oxygen_%O2', 'time_s']), sorted(df.columns))
         self.assertEqual(14, len(df))
 
+    def test_load_trox(self):
+        file1 = "../Scheitt 4  Ch1.txt"
+        df, m = read_developertool(self.directory + file1)
+        self.assertEqual({'software_version': 'PyroSimpleLogger\tv162\t(c) 2023 by\tPyroScience GmbH',
+                          'experiment_name': 'Scheitt 4 neue Ch1.txt', 'experiment_description': '', 'device': 'FSP1',
+                          'uid': '243B1F055AC97A89', 'firmware': '411:1', 'channel': '1',
+                          'settings': {'temperature': 'external sensor', 'pressure': 'internal sensor', 'salinity': 7.5,
+                                       'duration': '128ms', 'intensity': '30%', 'amp': '400x', 'frequency': 470,
+                                       'crc_enable': False, 'write_lock': False, 'auto_flash_duration': True,
+                                       'auto_amp': True, 'analyte': 'oxygen', 'fiber_type': '1 mm',
+                                       'fiber_length_mm': 1000, 'referenceMode': 'smart averaging',
+                                       'refDurationAveragingMode': 20, 'refDurationStandardMode': 50,
+                                       'timeLimitSmartAveragingMode ': 10},
+                          'calibration': {'dphi0': 15.159, 'dphi100': 6.674, 'temp0': 25.0, 'temp100': 25.0,
+                                          'pressure': 976.4, 'humidity': 22.0, 'f': 0.827, 'm': 0.075, 'freq': 470.0,
+                                          'tt': -0.0035, 'kt': 0.00874, 'bkgdAmpl': 0.536, 'bkgdDphi': 1.299, 'ft': 0.0,
+                                          'mt': -0.000106,
+                                          'percentO2': 20.95,
+                                          'date_calibration_high': datetime.datetime(2025, 4, 10, 12, 36),
+                                          'date_calibration_zero': datetime.datetime(2025, 4, 10, 12, 38)}}, m)
+        self.assertEqual(sorted(['comment', 'status', 'dphi', 'oxygen_µM', 'oxygen_hPa',
+                                 'oxygen_%airsat', 'sample_temperature', 'case_temperature',
+                                 'signal_intensity', 'ambient_light', 'pressure', 'humidity',
+                                 'oxygen_%O2', 'time_s']), sorted(df.columns))
+        self.assertEqual(1152, len(df))
+        self.assertDictEqual({k: np.nan if np.isnan(v) else v for k, v in df.iloc[10].to_dict().items()},
+                             {'comment': np.nan, 'oxygen_%airsat': 99.817568, 'ambient_light': -0.168, 'dphi': 6.854,
+                              'humidity': 24.864, 'oxygen_hPa': 198.645552, 'oxygen_%O2': 20.318076,
+                              'pressure': 977.679, 'signal_intensity': 266.114, 'status': 64.0,
+                              'case_temperature': 27.328, 'sample_temperature': 22.802, 'oxygen_µM': 247.52078400000002,
+                              'time_s': 10.02})
+
 
 if __name__ == '__main__':
     unittest.main()

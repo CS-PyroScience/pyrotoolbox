@@ -678,6 +678,14 @@ def read_developertool(fname: str) -> (pd.DataFrame, dict):
     df['status'] *= 1000
     if 'R (0.000001)' in df.columns:
         df['R (0.000001)'] /= 1000
+    if 'umolar (0.000001 umol/L)' in df.columns:  # oxygenx1000
+        df['umolar (0.000001 umol/L)'] /= 1000
+    if 'mbar (0.000001 mbar)' in df.columns:  # oxygenx1000
+        df['mbar (0.000001 mbar)'] /= 1000
+    if 'airSat (0.000001 %air sat)' in df.columns:  # oxygenx1000
+        df['airSat (0.000001 %air sat)'] /= 1000
+    if 'percentO2 (0.000001 %O2)' in df.columns:  # oxygenx1000
+        df['percentO2 (0.000001 %O2)'] /= 1000
 
     rename_dict = {'Comment': 'comment',
                    'status': 'status',
@@ -685,6 +693,9 @@ def read_developertool(fname: str) -> (pd.DataFrame, dict):
                    'umolar (0.001 umol/L)': 'oxygen_µM',
                    'mbar (0.001 mbar)': 'oxygen_hPa',
                    'airSat (0.001 %air sat)': 'oxygen_%airsat',
+                   'umolar (0.000001 umol/L)': 'oxygen_µM',
+                   'mbar (0.000001 mbar)': 'oxygen_hPa',
+                   'airSat (0.000001 %air sat)': 'oxygen_%airsat',
                    'tempSample (0.001 °C)': 'sample_temperature',
                    'tempCase (0.001 °C)': 'case_temperature',
                    'signalIntensity (0.001 mV)': 'signal_intensity',
@@ -693,6 +704,7 @@ def read_developertool(fname: str) -> (pd.DataFrame, dict):
                    'humidity (0.001 %RH)': 'humidity',
                    #'resistorTemp (0.001 Ohm or 0.001 mV)',
                    'percentO2 (0.001 %O2)': 'oxygen_%O2',
+                   'percentO2 (0.000001 %O2)': 'oxygen_%O2',
                    'tempOptical (0.001 °C)': 'optical_temperature',
                    'pH (0.001 pH)': 'pH',
                    'R (0.000001)': 'R',
