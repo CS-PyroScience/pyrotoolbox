@@ -670,7 +670,7 @@ def read_developertool(fname: str) -> (pd.DataFrame, dict):
         raise ValueError(f'Unknown analyte "{metadata["settings"]["analyte"]}". Please update software.')
 
     df = pd.read_csv(fname, skiprows=header, encoding='latin1', usecols=usecols, sep='\t', skip_blank_lines=False,
-                     na_values=['-300000'], dtype={'Comment': 'object'})
+                     na_values=['-300000'], dtype={'Comment': 'object', 'Fraction of Second (ms)': 'string'})
     df.index = pd.to_datetime(df.iloc[:, 0] + ' ' + df.iloc[:, 1].astype(str), format='%Y-%m-%d %H:%M:%S %f')
     df.drop([df.columns[0], df.columns[1]], axis=1, inplace=True)
 

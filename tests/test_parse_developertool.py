@@ -50,6 +50,7 @@ class TestDeveloperTool_v150(unittest.TestCase):
  'humidity': 53.069, 'ldev': 623.714, 'pH': 6.452, 'pressure': 975.434, 'signal_intensity': 221.603,
  'status': 0.0, 'case_temperature': 27.226, 'sample_temperature': 24.11,
  'time_s': 300.024}, {k: np.nan if np.isnan(v) else v for k, v in df.iloc[1].to_dict().items()})
+        self.assertTrue(df.index.is_monotonic_increasing)
 
 
 class TestDeveloperTool_v155(unittest.TestCase):
@@ -78,6 +79,7 @@ class TestDeveloperTool_v155(unittest.TestCase):
  'dphi': 14.531, 'humidity': 41.217, 'pH': np.nan, 'pressure': 969.176,
  'signal_intensity': 369.73, 'status': 32.0, 'case_temperature': 28.031, 'sample_temperature': np.nan,
  'time_s': 29.981}, {k: np.nan if np.isnan(v) else v for k, v in df.iloc[1].to_dict().items()})
+        self.assertTrue(df.index.is_monotonic_increasing)
 
 
 class TestDeveloperTool_v157(unittest.TestCase):
@@ -108,6 +110,7 @@ class TestDeveloperTool_v157(unittest.TestCase):
                               'humidity': 0.0, 'oxygen_hPa': -229.595, 'oxygen_%O2': -22.664, 'pressure': 0.0, 'signal_intensity': 427.371,
                               'status': 0.0, 'case_temperature': 25.908, 'sample_temperature': 23.83, 'oxygen_µM': -281.975,
                               'time_s': 0.974}, {k: np.nan if np.isnan(v) else v for k, v in df.iloc[1].to_dict().items()})
+        self.assertTrue(df.index.is_monotonic_increasing)
 
 
 class TestDeveloperTool_v158(unittest.TestCase):
@@ -136,6 +139,7 @@ class TestDeveloperTool_v158(unittest.TestCase):
                               'humidity': 49.647, 'oxygen_hPa': -6.915, 'oxygen_%O2': -0.713, 'pressure': 968.737, 'signal_intensity': 1659.394,
                               'status': 1.0, 'case_temperature': 9.648, 'sample_temperature': 23.735, 'oxygen_µM': -8.482, 'time_s': 4.956},
                              {k: np.nan if np.isnan(v) else v for k, v in df.iloc[1].to_dict().items()})
+        self.assertTrue(df.index.is_monotonic_increasing)
 
     def test_load_f2(self):
         file1 = "FSP15 249BC3015AC980E1 2024-05-23 15'12'14 Ch1.txt"
@@ -161,6 +165,7 @@ class TestDeveloperTool_v158(unittest.TestCase):
                               'pressure': 973.338, 'signal_intensity': 1006.95, 'status': 32.0,
                               'case_temperature': 26.953, 'sample_temperature': np.nan, 'time_s': 1.001},
                              {k: np.nan if np.isnan(v) else v for k, v in df.iloc[1].to_dict().items()})
+        self.assertTrue(df.index.is_monotonic_increasing)
 
 
 class TestDeveloperTool_v162(unittest.TestCase):
@@ -189,6 +194,7 @@ class TestDeveloperTool_v162(unittest.TestCase):
  'dphi': 177.861, 'humidity': 49.587, 'oxygen_hPa': np.nan, 'oxygen_%O2': np.nan, 'pressure': 970.921,
  'signal_intensity': 1.059, 'status': 34.0, 'case_temperature': 28.468, 'sample_temperature': np.nan, 'oxygen_µM': np.nan,
  'time_s': 0.976}, {k: np.nan if np.isnan(v) else v for k, v in df.iloc[1].to_dict().items()})
+        self.assertTrue(df.index.is_monotonic_increasing)
 
     def test_load_f2(self):
         file1 = "FSP39 24EB9B03596FC737 2024-07-01 13'42'41 Ch2.txt"
@@ -212,6 +218,7 @@ class TestDeveloperTool_v162(unittest.TestCase):
  'dphi': -175.978, 'humidity': 49.599, 'pH': np.nan, 'pressure': 970.94,
  'signal_intensity': 0.636, 'status': 34.0, 'case_temperature': 28.398, 'sample_temperature': np.nan,
  'time_s': 0.98}, {k: np.nan if np.isnan(v) else v for k, v in df.iloc[1].to_dict().items()})
+        self.assertTrue(df.index.is_monotonic_increasing)
 
     def test_load_f3(self):
         file1 = "FSP39 24EB9B03596FC737 2024-07-01 13'42'41 Ch3.txt"
@@ -230,6 +237,7 @@ class TestDeveloperTool_v162(unittest.TestCase):
        'signal_intensity', 'ambient_light', 'pressure', 'humidity',
        'optical_temperature', 'time_s']), sorted(df.columns))
         self.assertEqual(14, len(df))
+        self.assertTrue(df.index.is_monotonic_increasing)
 
     def test_load_f4(self):
         file1 = "FSP39 24EB9B03596FC737 2024-07-01 13'42'41 Ch4.txt"
@@ -250,6 +258,7 @@ class TestDeveloperTool_v162(unittest.TestCase):
        'signal_intensity', 'ambient_light', 'pressure', 'humidity',
        'oxygen_%O2', 'time_s']), sorted(df.columns))
         self.assertEqual(14, len(df))
+        self.assertTrue(df.index.is_monotonic_increasing)
 
     def test_load_trox(self):
         file1 = "../Scheitt 4  Ch1.txt"
@@ -282,6 +291,7 @@ class TestDeveloperTool_v162(unittest.TestCase):
                               'pressure': 977.679, 'signal_intensity': 266.114, 'status': 64.0,
                               'case_temperature': 27.328, 'sample_temperature': 22.802, 'oxygen_µM': 247.52078400000002,
                               'time_s': 10.02})
+        self.assertTrue(df.index.is_monotonic_increasing)
 
 
 if __name__ == '__main__':
