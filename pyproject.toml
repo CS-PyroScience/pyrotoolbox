@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "pyrotoolbox"
 version = "1.5b"
 dependencies = [
-    'pandas', 'numpy', 'plotly', 'PyQt5', 'pyqtgraph', 'lmfit', 'reportlab'
+    'pandas', 'numpy', 'plotly', 'PyQt5', 'pyqtgraph', 'lmfit', 'reportlab', 'matplotlib'
 ]
 requires-python = ">=3.10"
 authors = [

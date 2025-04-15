@@ -213,13 +213,13 @@ class FireResponse(QMainWindow):
         right_col.addWidget(self.response_plot)
         right_col.addLayout(t_grid)
 
-
     def trigger_select_pyroscience_file(self):
-        fname = QFileDialog.getOpenFileName(self, 'Select Channel-File', filter='Text files (*.txt)')[0]
+        fname = QFileDialog.getOpenFileName(self, 'Select Channel-File', self.path, filter='Text files (*.txt)')[0]
         self.load_pyro_file(fname)
 
     def trigger_select_csv_file(self):
-        fname = QFileDialog.getOpenFileName(self, 'Select csv file', filter='Text files (*.txt *.csv);;All Files (*)')[0]
+        fname = QFileDialog.getOpenFileName(self, 'Select csv file', self.path,
+                                            filter='Text files (*.txt *.csv);;All Files (*)')[0]
         self.load_csv_file(fname)
 
     def load_pyro_file(self, fname=None):
@@ -269,6 +269,7 @@ class FireResponse(QMainWindow):
         self.trace_combo.setEnabled(False)
         self.overview_plot.plotItem.plot(self.df.index.astype(np.int64)/1e9, self.df[trace], pen=pg.mkPen(width=3))
         self.overview_plot.setEnabled(True)
+        self.overview_plot.autoRange()
 
     def clear_responses(self):
         ret = QMessageBox.question(self, "Do you want to delete all marked responses?", "Continue and delete all responses?", QMessageBox.Ok | QMessageBox.Cancel)
