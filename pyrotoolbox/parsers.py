@@ -33,7 +33,7 @@ from dateutil import parser as duparser
 import datetime as dt
 
 # Current software-versions. Used to display warnings if a newer logfiles is loaded.
-CURRENT_WORKBENCH_VERSION = '1.5.3'
+CURRENT_WORKBENCH_VERSION = '1.5.4'
 CURRENT_DEVELOPERTOOL_VERSION = '162'
 
 
@@ -93,7 +93,7 @@ def read_workbench(fname: str) -> (pd.DataFrame, dict):
     # get system data
     if not '--- System ---' in lines[l]:
         raise ValueError('System section not found in logfile')
-    match = re.search(r'(Workbench \S+)', lines[l+1])
+    match = re.search(r'(Workbench \S+)', lines[l + 1])
     if not match:
         raise ValueError('Unable to parse Workbench version!')
     metadata['software_version'] = match.groups()[0]
@@ -105,12 +105,12 @@ def read_workbench(fname: str) -> (pd.DataFrame, dict):
         raise ValueError('Instrument section not found in logfile')
     serial_number = ''
     if metadata['software_version'].rsplit(maxsplit=1)[-1][1:6] <= '1.4.7':
-        match = re.match(r'Device: (.+) SN:(\S+) Firmware:(\S+) Build:(\S+)', lines[l+1])
+        match = re.match(r'Device: (.+) SN:(\S+) Firmware:(\S+) Build:(\S+)', lines[l + 1])
         if not match:
             raise ValueError('Unable to parse instrument information!')
         device, uid, firmware, build = match.groups()
     else:
-        match = re.match(r'Device: (.+) SN:(\S+) UiD:(\S+) Firmware:(\S+) Build:(\S+)', lines[l+1])
+        match = re.match(r'Device: (.+) SN:(\S+) UiD:(\S+) Firmware:(\S+) Build:(\S+)', lines[l + 1])
         if not match:
             raise ValueError('Unable to parse instrument information!')
         device, serial_number, uid, firmware, build = match.groups()
@@ -124,9 +124,9 @@ def read_workbench(fname: str) -> (pd.DataFrame, dict):
     # get channel data
     if not '--- Channel ---' in lines[l]:
         raise ValueError('Channel section not found in logfile')
-    match = re.match(r'Channel \[.*Ch\.(\d)\] - (.*) - (.*)', lines[l+1])
+    match = re.match(r'Channel \[.*Ch\.(\d)\] - (.*) - (.*)', lines[l + 1])
     if not match:  # might be PT100
-        match = re.match(r'Channel \[.*(T\d)\] - (.*)', lines[l+1])
+        match = re.match(r'Channel \[.*(T\d)\] - (.*)', lines[l + 1])
         if not match:
             raise ValueError('Unable to parse Channel information!')
         channel, sensor_type = match.groups()
@@ -137,14 +137,14 @@ def read_workbench(fname: str) -> (pd.DataFrame, dict):
         metadata['sensor_code'] = sensor_code.strip()
 
     l += 2
-    if sensor_type in ('pH Sensor', 'Oxygen Sensor', 'Optical Temperature Sensor'):  # TODO Check for optT TODO when does this not apply?!
+    if sensor_type in ('pH Sensor', 'Oxygen Sensor', 'Optical Temperature Sensor'):
         # get settings and calibration
         if not lines[l].startswith('--- Settings & Calibration ---'):
             raise ValueError('Settings and Calibration section not found in logfile')
-        metadata['settings'] = _parse_workbench_settings(lines[l+1], lines[l+2])
+        metadata['settings'] = _parse_workbench_settings(lines[l + 1], lines[l + 2])
 
         metadata['calibration'] = _parse_workbench_calibration(metadata['settings']['analyte'],
-                                                               lines[l+3], lines[l+4])
+                                                               lines[l + 3], lines[l + 4])
 
         l += 5
 
@@ -159,8 +159,9 @@ def read_workbench(fname: str) -> (pd.DataFrame, dict):
         if metadata['software_version'].count('.') <= 2:  # old Version format hat only 2 dots
             usecols = [0, 1, 2, 4, 5, 6, 7, 8]
         else:
-            if isinstance(metadata['settings']['temperature'], str) and metadata['settings']['temperature'].startswith('Optical Temperature Sensor'):
-                usecols = [0, 1, 2, 3,  5, 6, 7, 8, 9, 16]  #  TODO test
+            if isinstance(metadata['settings']['temperature'], str) and metadata['settings']['temperature'].startswith(
+                    'Optical Temperature Sensor'):
+                usecols = [0, 1, 2, 3, 5, 6, 7, 8, 9, 16]
             else:
                 usecols = [0, 1, 2, 3, 5, 6, 7, 8, 9, 13]
     elif sensor_type == 'Oxygen Sensor':
@@ -169,7 +170,8 @@ def read_workbench(fname: str) -> (pd.DataFrame, dict):
         elif metadata['software_version'] <= 'Workbench V1.0.1.808':
             usecols = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 15, 20]
         else:
-            if isinstance(metadata['settings']['temperature'], str) and metadata['settings']['temperature'].startswith('Optical Temperature Sensor'):
+            if isinstance(metadata['settings']['temperature'], str) and metadata['settings']['temperature'].startswith(
+                    'Optical Temperature Sensor'):
                 usecols = [0, 1, 2, 3, 4, 5, 6, 7, 11, 19]
             else:
                 usecols = [0, 1, 2, 3, 4, 5, 6, 7, 11, 16]
@@ -180,7 +182,7 @@ def read_workbench(fname: str) -> (pd.DataFrame, dict):
     else:
         raise ValueError('Unknown Sensor type: ' + sensor_type)
 
-    df = pd.read_csv(fname, skiprows=header+1,
+    df = pd.read_csv(fname, skiprows=header + 1,
                      skip_blank_lines=False, encoding='latin1', usecols=usecols, sep='\t',
                      na_values=['NaN', '>NaN', '>8.5', '<5.5', '>9.5', '<6.5', '>7.5', '<5.5', '>6.5', '<4.5', '<3.5',
                                 '<4', '>8', '<5'])
@@ -270,7 +272,7 @@ def _parse_workbench_settings(line1: str, line2: str) -> dict:
             except:
                 pass
         d[name] = value
-    if d['Radio Temp'] == 'External Temperature Sensor':  # TODO testen was wirklich bei external, device, optical und fixed hier rein geschrieben wird
+    if d['Radio Temp'] == 'External Temperature Sensor':
         temperature = 'external sensor'
     elif d['Radio Temp'] == 'Internal Temperature Sensor':
         temperature = 'internal sensor'
@@ -281,7 +283,7 @@ def _parse_workbench_settings(line1: str, line2: str) -> dict:
     else:
         print('unknown temperature setting: ', d['Radio Temp'], file=sys.stderr)
         temperature = 'unknown'
-    if d['Radio Pressure'] == 'Internal Pressure Sensor':  # TODO testen was wirklich bei fixed und ambient hier reingeschrieben wird
+    if d['Radio Pressure'] == 'Internal Pressure Sensor':
         pressure = 'internal sensor'
     elif d['Radio Pressure'] == 'Fixed Pressure (mbar)':
         pressure = float(d['Pressure (mbar)'])
@@ -290,23 +292,23 @@ def _parse_workbench_settings(line1: str, line2: str) -> dict:
         pressure = 'unknown'
 
     r = {'duration': d['Duration'],
-            'intensity': d['Intensity'].split(' ')[0],
-            'amp': d['Amp'].split('(')[1][:-1],
-            'frequency': d['Frequency (Hz)'],
-            'crc_enable': d['Crc Enable'],
-            'write_lock': d['Write Lock'],
-            'auto_flash_duration': d['Autom. Flash Duration'],
-            'auto_amp': d['Autom. Amp Level'],
-            'analyte': d['Analyte'],
-            'fiber_type': d['Fiber Type'],
-            'temperature': temperature,
-            'pressure': pressure,
-            'salinity': float(d['Salinity (g/l)']),
-            }
+         'intensity': d['Intensity'].split(' ')[0],
+         'amp': d['Amp'].split('(')[1][:-1],
+         'frequency': d['Frequency (Hz)'],
+         'crc_enable': d['Crc Enable'],
+         'write_lock': d['Write Lock'],
+         'auto_flash_duration': d['Autom. Flash Duration'],
+         'auto_amp': d['Autom. Amp Level'],
+         'analyte': d['Analyte'],
+         'fiber_type': d['Fiber Type'],
+         'temperature': temperature,
+         'pressure': pressure,
+         'salinity': float(d['Salinity (g/l)']),
+         }
     if 'Fiber Length (mm)' in d:
         r['fiber_length_mm'] = d['Fiber Length (mm)']  # introduced with FW4.10
 
-    return  r
+    return r
 
 
 def _parse_workbench_calibration(analyte: str, line1: str, line2: str) -> dict:
@@ -325,9 +327,6 @@ def _parse_workbench_calibration(analyte: str, line1: str, line2: str) -> dict:
             'Background Amplitude (mV)': 'bkgdAmpl',
             'Background dphi (°)': 'bkgdDphi',
             'mt(1/K)': 'mt',
-            #'Tofs(K)': 'Tofs',  # TODO used?
-            #'Ksv (1/mbar)': 'ksv',
-            #'Method': ''
             'Air Pressure (mbar)': 'pressure',
             'Temperature (°C)': 'temp100',
             'Humidity (%RH)': 'humidity',
@@ -391,6 +390,10 @@ def _parse_workbench_calibration(analyte: str, line1: str, line2: str) -> dict:
     else:
         print('Warning! Unknown analyte. Please update!', file=sys.stderr)
         return {}
+    # Bugfix for workbench 1.5.4.2482
+    if line1.startswith('Calibration:WellNr'):
+        line1 = line1.replace('Calibration:WellNr\t', 'Calibration:\tWellNr')
+        line2 = '\t' + line2.replace('/t#', '')
     for name, value in zip(line1.split('\t')[1:], line2.split('\t')[1:]):
         if name in rename_dict:
             name = rename_dict[name]
@@ -418,13 +421,14 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
     :param fname: path to the lofile
     :return: DataFrame, metadata-dict
     """
+
     def channel_number_to_coordinate(channel: str):
         """ Converts either '1' or 'A1' to 'A01'
         """
         channel = channel.strip()
         try:  # works for Workbench > 1.5.4
             channel = int(channel)
-            return 'ABCDEFGH'[(channel - 1)//12] + f'{(channel - 1) % 12 + 1:0>2}'
+            return 'ABCDEFGH'[(channel - 1) // 12] + f'{(channel - 1) % 12 + 1:0>2}'
         except:
             pass
         if len(channel) == 3:
@@ -433,7 +437,6 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
             return channel[0] + '0' + channel[1]
         else:
             raise ValueError(f'Invalid channel name "{channel}"')
-
 
     # first load header lines
     lines = []
@@ -461,7 +464,7 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
     # get system data
     if not '--- System ---' in lines[l]:
         raise ValueError('System section not found in logfile')
-    match = re.search(r'(Workbench \S+)', lines[l+1])
+    match = re.search(r'(Workbench \S+)', lines[l + 1])
     if not match:
         raise ValueError('Unable to parse Workbench version!')
     metadata['software_version'] = match.groups()[0]
@@ -469,7 +472,7 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
     # get instrument data
     if not '--- Instrument ---' in lines[l]:
         raise ValueError('Instrument section not found in logfile')
-    match = re.match(r'Device: (.+) SN:(\S+) UiD:(\S+) Firmware:(\S+) Build:(\S+)', lines[l+1])
+    match = re.match(r'Device: (.+) SN:(\S+) UiD:(\S+) Firmware:(\S+) Build:(\S+)', lines[l + 1])
     if not match:
         raise ValueError('Unable to parse instrument information!')
     device, serial_number, uid, firmware, build = match.groups()
@@ -483,7 +486,7 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
     # get channel data
     if not '--- Channel ---' in lines[l]:
         raise ValueError('Channel section not found in logfile')
-    match = re.match(r'Group \[.*Gr\.(\d)\] - (.*) - (.*) - Well numbers: (.*)', lines[l+1])
+    match = re.match(r'Group \[.*Gr\.(\d)\] - (.*) - (.*) - Well numbers: (.*)', lines[l + 1])
     channel, sensor_type, sensor_code, well_numbers = match.groups()
     metadata['group'] = int(channel)
     metadata['sensor_code'] = sensor_code.strip()
@@ -496,12 +499,12 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
     # get settings and calibration
     if not lines[l].startswith('--- Settings & Calibration ---'):
         raise ValueError('Settings and Calibration section not found in logfile')
-    metadata['settings'] = _parse_workbench_settings(lines[l+1], lines[l+2])
+    metadata['settings'] = _parse_workbench_settings(lines[l + 1], lines[l + 2])
 
     metadata['calibration'] = {}
     for i, channel in enumerate(metadata['channels']):
         metadata['calibration'][channel] = _parse_workbench_calibration(metadata['settings']['analyte'],
-                                                           lines[l+3], lines[l+4+i])
+                                                                        lines[l + 3], lines[l + 4 + i])
 
     l += 5 + i
 
@@ -513,14 +516,22 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
             raise ValueError('Could not find start of data')
 
     if sensor_type == 'Oxygen Sensor':
+        # last two are case temp and pressure
         usecols = list(range(0, 3 + len(metadata['channels']) * 5)) + [3 + len(metadata['channels']) * 5 + 3,
                                                                        3 + len(metadata['channels']) * 5 + 8]
     elif sensor_type == 'Optical Temperature Sensor':
         usecols = list(range(0, 3 + len(metadata['channels']) * 5))
+    elif sensor_type == 'pH Sensor':
+        usecols = [0, 1, 2]
+        for i in range(len(metadata['channels'])):
+            for j in range(1, 7):
+                usecols.append(3+i*7 + j)
+        # case temp
+        usecols.append(3 + len(metadata['channels']) * 7 + 3)
     else:
         raise ValueError('Unknown Sensor type: ' + sensor_type)
 
-    df = pd.read_csv(fname, skiprows=header+1, skip_blank_lines=False, encoding='latin1', usecols=usecols, sep='\t',
+    df = pd.read_csv(fname, skiprows=header + 1, skip_blank_lines=False, encoding='latin1', usecols=usecols, sep='\t',
                      na_values=['NaN', '>NaN', '>8.5', '<5.5', '>9.5', '<6.5', '>7.5', '<5.5', '>6.5', '<4.5', '<3.5',
                                 '<4', '>8', '<5'])
     df.index = pd.to_datetime(df.iloc[:, 0] + ' ' + df.iloc[:, 1], dayfirst=True)
@@ -538,32 +549,31 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
         channel = info[:-6].rsplit('.')[-1]
         channel_name = channel_number_to_coordinate(channel)
         name = {'Date_time': 'date_time',
-                            'dt (s)': 'time_s',
-                            'Oxygen (%O2)': 'oxygen_%O2',
-                            'Oxygen (%air sat.)': 'oxygen_%airsat',
-                            'Oxygen (%air sat)': 'oxygen_%airsat',  # with and without . is possible
-                            'Oxygen (mbar)': 'oxygen_hPa',
-                            'Oxygen (Torr)': 'oxygen_torr',
-                            'Oxygen (µM)': 'oxygen_µM',
-                            'Oxygen (µmol/L)': 'oxygen_µM',
-                            'Oxygen (mg/L)': 'oxygen_mg/L',
-                            'Oxygen (µg/L)': 'oxygen_µg/L',
-                            'Oxygen (mL/L)': 'oxygen_mL/L',
-                            'Oxygen (hPa)': 'oxygen_hPa',
-                            'dphi (°)': 'dphi',
-                            'Signal Intensity (mV)': 'signal_intensity',
-                            'Ambient Light (mV)': 'ambient_light',
-                            'Status': 'status',
-                            'Sample Temp. (°C)': 'sample_temperature',
-                            'Case Temp. (°C)': 'case_temperature',
-                            'Fixed Temp (°C)': 'fixed_temperature',
-                            'Pressure (mbar)': 'pressure',
-                            'pH (pH)': 'pH',
-                            'R': 'R',
-                            'Optical Temp. (°C)': 'optical_temperature',
-                            'Idev (nm)': 'ldev',
-                            'ldev (nm)': 'ldev',
-                            }[col]
+                'dt (s)': 'time_s',
+                'Oxygen (%O2)': 'oxygen_%O2',
+                'Oxygen (%air sat.)': 'oxygen_%airsat',
+                'Oxygen (%air sat)': 'oxygen_%airsat',  # with and without . is possible
+                'Oxygen (mbar)': 'oxygen_hPa',
+                'Oxygen (Torr)': 'oxygen_torr',
+                'Oxygen (µM)': 'oxygen_µM',
+                'Oxygen (µmol/L)': 'oxygen_µM',
+                'Oxygen (mg/L)': 'oxygen_mg/L',
+                'Oxygen (µg/L)': 'oxygen_µg/L',
+                'Oxygen (mL/L)': 'oxygen_mL/L',
+                'Oxygen (hPa)': 'oxygen_hPa',
+                'dphi (°)': 'dphi',
+                'Signal Intensity (mV)': 'signal_intensity',
+                'Ambient Light (mV)': 'ambient_light',
+                'Status': 'status',
+                'Sample Temp. (°C)': 'sample_temperature',
+                'Case Temp. (°C)': 'case_temperature',
+                'Fixed Temp (°C)': 'fixed_temperature',
+                'Pressure (mbar)': 'pressure',
+                'pH (pH)': 'pH',
+                'pH': 'pH',
+                'R': 'R',
+                'Optical Temp. (°C)': 'optical_temperature',
+                }[col]
         return channel_name + '_' + name
 
     def reencode_status(s: str):
@@ -606,10 +616,11 @@ def read_developertool(fname: str) -> (pd.DataFrame, dict):
 
     metadata = {}
     # get experiment notes
-    metadata['software_version'] = lines[0].split('\t',maxsplit=1)[1]
+    metadata['software_version'] = lines[0].split('\t', maxsplit=1)[1]
 
     if metadata['software_version'].split()[1][1:] > CURRENT_DEVELOPERTOOL_VERSION:
-        print(f'Warning! Unknown DeveloperTool version "{metadata["software_version"]}"! Please update pyrotoolbox.', file=sys.stderr)
+        print(f'Warning! Unknown DeveloperTool version "{metadata["software_version"]}"! Please update pyrotoolbox.',
+              file=sys.stderr)
 
     metadata['experiment_name'] = lines[2].split('\t', maxsplit=1)[1]
     metadata['experiment_description'] = lines[3].split('\t', maxsplit=1)[1]
@@ -659,11 +670,11 @@ def read_developertool(fname: str) -> (pd.DataFrame, dict):
     # 18 R
     # 19 forward: raw results
     if metadata['settings']['analyte'] == 'oxygen':
-        usecols = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,15]
+        usecols = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]
     elif metadata['settings']['analyte'] == 'temperature':
-        usecols = [0,1,2,3,4,8,9,10,11,12,13,16]
+        usecols = [0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 13, 16]
     elif metadata['settings']['analyte'] == 'pH':
-        usecols = [0,1,2,3,4,8,9,10,11,12,13,17,18]
+        usecols = [0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 13, 17, 18]
     elif metadata['settings']['analyte'] == 'none':
         usecols = [0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 13]
     else:
@@ -702,7 +713,7 @@ def read_developertool(fname: str) -> (pd.DataFrame, dict):
                    'ambientLight (0.001 mV)': 'ambient_light',
                    'pressure (0.001 mbar)': 'pressure',
                    'humidity (0.001 %RH)': 'humidity',
-                   #'resistorTemp (0.001 Ohm or 0.001 mV)',
+                   # 'resistorTemp (0.001 Ohm or 0.001 mV)',
                    'percentO2 (0.001 %O2)': 'oxygen_%O2',
                    'percentO2 (0.000001 %O2)': 'oxygen_%O2',
                    'tempOptical (0.001 °C)': 'optical_temperature',
@@ -760,7 +771,7 @@ def _parse_developertool_settings(line1: str, line2: str) -> dict:
         elif name == 'salinity (0.001 g/L)':
             d['salinity'] = value / 1000
         elif name == 'duration (1=1ms, 8=128ms)':
-            d['duration'] = f'{2**(value-1)}ms'
+            d['duration'] = f'{2 ** (value - 1)}ms'
         elif name == 'intensity (0=10%, 7=100%)':
             d['intensity'] = ('10%', '15%', '20%', '30%', '40%', '60%', '80%', '100%')[value]
         elif name == 'amp (3=40x, 4=80x, 5=200x, 6=400x)':
@@ -776,7 +787,7 @@ def _parse_developertool_settings(line1: str, line2: str) -> dict:
                       'autoRange (0=disabled, 1=autoFlashDur., 2=autoAmp, 3= autoFlashDur.+autoAmp)'):
             d['auto_flash_duration'] = bool(value & 1)
             d['auto_amp'] = bool(value & 2)
-            #d['oxygen_x1000'] = value & 4  # skipped for compatibility with workbench
+            # d['oxygen_x1000'] = value & 4  # skipped for compatibility with workbench
         elif name == 'broadcast':
             pass  # skipped
         elif name == 'analyte (0=none, 1=O2, 2=T, 3=pH, 4=CO2)':
@@ -796,25 +807,25 @@ def _parse_developertool_calibration(analyte: str, line1: str, line2: str) -> di
     calibration = {}
     if analyte == 'oxygen':
         rename_dict = {
-        'dphi0 (0.001 °)': ('dphi0', 1e3),
-        'dphi100 (0.001 °)': ('dphi100', 1e3),
-        'temp0 (0.001 °C)': ('temp0', 1e3),
-        'temp100 (0.001 °C)': ('temp100', 1e3),
-        'pressure (0.001 mbar)': ('pressure', 1e3),
-        'humidity (0.001 %RH)': ('humidity', 1e3),
-        'f (0.001)': ('f', 1e3),
-        'm (0.001)': ('m', 1e3),
-        'calFreq (Hz)': ('freq', 1),
-        'tt (10e-5/K)': ('tt', 1e5),
-        'kt (10e-5/K)': ('kt', 1e5),
-        'bkgdAmp (0.001 mV)': ('bkgdAmpl', 1e3),
-        'bkgdDphi (0.001 °)': ('bkgdDphi', 1e3),
-        #'useKsv':
-        #'ksv(10e-6 / mbar)':
-        'ft (10e-6 / K)': ('ft', 1e6),
-        'mt (10e-6/K)': ('mt', 1e6),
-        #'tempOffset (0.001 °C)': ('Tofs', 1e3),
-        'percentO2 (0.001 %O2)': ('percentO2', 1e3)
+            'dphi0 (0.001 °)': ('dphi0', 1e3),
+            'dphi100 (0.001 °)': ('dphi100', 1e3),
+            'temp0 (0.001 °C)': ('temp0', 1e3),
+            'temp100 (0.001 °C)': ('temp100', 1e3),
+            'pressure (0.001 mbar)': ('pressure', 1e3),
+            'humidity (0.001 %RH)': ('humidity', 1e3),
+            'f (0.001)': ('f', 1e3),
+            'm (0.001)': ('m', 1e3),
+            'calFreq (Hz)': ('freq', 1),
+            'tt (10e-5/K)': ('tt', 1e5),
+            'kt (10e-5/K)': ('kt', 1e5),
+            'bkgdAmp (0.001 mV)': ('bkgdAmpl', 1e3),
+            'bkgdDphi (0.001 °)': ('bkgdDphi', 1e3),
+            # 'useKsv':
+            # 'ksv(10e-6 / mbar)':
+            'ft (10e-6 / K)': ('ft', 1e6),
+            'mt (10e-6/K)': ('mt', 1e6),
+            # 'tempOffset (0.001 °C)': ('Tofs', 1e3),
+            'percentO2 (0.001 %O2)': ('percentO2', 1e3)
         }
     elif analyte == 'pH':
         rename_dict = {
@@ -866,7 +877,7 @@ def _parse_developertool_calibration(analyte: str, line1: str, line2: str) -> di
             'R2 (10e-6)': ('R2', 1e6),
             'pH2 (0.001)': ('pH2', 1e3),
             'offset (0.001)': ('offset', 1e3),
-            'attenuation_coefficient (10e-6 1/m)':('attenuation_coefficient', 1e6),
+            'attenuation_coefficient (10e-6 1/m)': ('attenuation_coefficient', 1e6),
             'bkgdAmpl (0.001 mV)': ('bkgdAmpl', 1e3),
             'dsf_dye (10e-6)': ('dsf_dye', 1e6),
             'dtf_dye (10e-6)': ('dtf_dye', 1e6),
@@ -879,10 +890,10 @@ def _parse_developertool_calibration(analyte: str, line1: str, line2: str) -> di
         }
     elif analyte == 'temperature':
         rename_dict = {
-                       'M (0.01)': ('M', 100),
-                       'N (0.01)': ('N', 100),
-                       'C (0.001)': ('C', 1e3),
-                       'Tofs (0.001 °C)': ('temp_offset', 1e3),
+            'M (0.01)': ('M', 100),
+            'N (0.01)': ('N', 100),
+            'C (0.001)': ('C', 1e3),
+            'Tofs (0.001 °C)': ('temp_offset', 1e3),
             'bkgdAmp (0.001 mV)': ('bkgdAmpl', 1e3),
             'bkgdDphi (0.001 °)': ('bkgdDphi', 1e3),
         }
@@ -898,7 +909,7 @@ def _parse_developertool_calibration(analyte: str, line1: str, line2: str) -> di
             if name not in ('useKsv', 'ksv (10e-6/mbar)', '-', 'tempOffset (0.001 °C)'):
                 print(f'skipping {name}. value: {value}', file=sys.stderr)
             continue
-        value = round(float(value)/factor, 6)
+        value = round(float(value) / factor, 6)
         calibration[name] = value
     return calibration
 
@@ -925,9 +936,9 @@ def _parse_developertool_ref_settings(line1: str, line2: str) -> dict:
 
 def _parse_developertool_calibration_status(analyte: str, line2: str) -> dict:
     if analyte == 'oxygen':
-        calibration_points = [ 'date_calibration_high', 'date_calibration_zero']
+        calibration_points = ['date_calibration_high', 'date_calibration_zero']
     elif analyte == 'pH':
-        calibration_points = [ 'date_calibration_acid', 'date_calibration_base', 'date_calibration_offset']
+        calibration_points = ['date_calibration_acid', 'date_calibration_base', 'date_calibration_offset']
     elif analyte == 'temperature':
         calibration_points = ['date_calibration_offset']
     elif analyte == 'none':
@@ -945,7 +956,7 @@ def _parse_developertool_calibration_status(analyte: str, line2: str) -> dict:
             month = int(value[-4:-2])
             year = int('20' + value[-6:-4])
             minutes = int(value[:-6])
-            d[name] = dt.datetime(year=year, month=month, day=day, hour=minutes//60, minute=minutes%60)
+            d[name] = dt.datetime(year=year, month=month, day=day, hour=minutes // 60, minute=minutes % 60)
     return d
 
 
@@ -992,10 +1003,9 @@ def read_developertool_directory(pattern: str = '*.txt'):
         print(f'{key:<{max_keylen}} ', end='')
         for i in range(len(d)):
             if i > 0:
-                print((max_keylen+1)*' ', end='')
+                print((max_keylen + 1) * ' ', end='')
             print(f'{i:>2} {filenames[key][i]:<{max_namelen}} {len(d[i]):>10}')
         print(115 * '-')
-
 
     return data, metadata, filenames
 
@@ -1039,14 +1049,14 @@ def read_aquaphoxlogger(fname: str) -> (pd.DataFrame, dict):
                                    'ABCDEFGH'[int(led_code)] + str(int(amp_code) + 1) + f'-{middle:0>3}-{last:0>3}')
 
         # parse calibration status
-        metadata['calibration'].update(_parse_developertool_calibration_status(metadata['settings']['analyte'], lines[25]))
+        metadata['calibration'].update(
+            _parse_developertool_calibration_status(metadata['settings']['analyte'], lines[25]))
 
         # parse referenceSettings
         metadata['settings'].update(_parse_developertool_ref_settings(lines[32], lines[33]))
     else:
         # parse referenceSettings
         metadata['settings'].update(_parse_developertool_ref_settings(lines[20], lines[21]))
-
 
     # get header count
     header = 0
@@ -1078,13 +1088,13 @@ def read_aquaphoxlogger(fname: str) -> (pd.DataFrame, dict):
     # 18 R
     # 19 forward: empty registers
     if metadata['settings']['analyte'] == 'oxygen':
-        usecols = [0,3,4,5,6,7,8,9,10,11,12,13,15]
+        usecols = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]
     elif metadata['settings']['analyte'] == 'temperature':
-        usecols = [0,3,4,8,9,10,11,12,13,16]
+        usecols = [0, 3, 4, 8, 9, 10, 11, 12, 13, 16]
     elif metadata['settings']['analyte'] == 'pH':
-        usecols = [0,3,4,8,9,10,11,12,13,17,18]
+        usecols = [0, 3, 4, 8, 9, 10, 11, 12, 13, 17, 18]
     elif metadata['settings']['analyte'] == 'none':
-        usecols = [0,3,4,8,9,10,11,12,13]
+        usecols = [0, 3, 4, 8, 9, 10, 11, 12, 13]
     else:
         raise ValueError(f'Unknown analyte "{metadata["settings"]["analyte"]}". Please update software.')
 
@@ -1094,7 +1104,8 @@ def read_aquaphoxlogger(fname: str) -> (pd.DataFrame, dict):
     df.drop(df.columns[0], axis=1, inplace=True)
     df = (df.select_dtypes(exclude='object') / 1000).combine_first(df)  # to exclude 'comment' column
     df['status'] *= 1000
-    if metadata['settings']['analyte'] == 'pH' and metadata['firmware'].startswith('410'):  # workaround for wrong column name. Might not only be 410
+    if metadata['settings']['analyte'] == 'pH' and metadata['firmware'].startswith(
+            '410'):  # workaround for wrong column name. Might not only be 410
         df['R (0.000001)'] = df['ldev (0.001 nm)'] / 1000
         del df['ldev (0.001 nm)']
 
@@ -1110,7 +1121,7 @@ def read_aquaphoxlogger(fname: str) -> (pd.DataFrame, dict):
                    'ambientLight (0.001 mV)': 'ambient_light',
                    'pressure (0.001 mbar)': 'pressure',
                    'humidity (0.001 %RH)': 'humidity',
-                   #'resistorTemp (0.001 Ohm or 0.001 mV)',
+                   # 'resistorTemp (0.001 Ohm or 0.001 mV)',
                    'percentO2 (0.001 %O2)': 'oxygen_%O2',
                    'tempOptical (0.001 °C)': 'optical_temperature',
                    'pH (0.001 pH)': 'pH',
@@ -1167,7 +1178,7 @@ def read_fsgo2(fname: str) -> (pd.DataFrame, dict):
             else:
                 settings['pressure'] = v  # untested!
         elif k == 'Salinity':
-            settings['salinity'] = float(v.split( )[0])
+            settings['salinity'] = float(v.split()[0])
         elif k == 'LED intensity':
             settings['intensity'] = v
         elif k == 'Amplification':
@@ -1237,7 +1248,7 @@ def read_fsgo2(fname: str) -> (pd.DataFrame, dict):
         if header > len(lines):
             raise ValueError('Could not find start of data')
 
-    usecols = [1,2,5,6,7,8,10,11,12,13,14]
+    usecols = [1, 2, 5, 6, 7, 8, 10, 11, 12, 13, 14]
 
     df = pd.read_csv(fname, skiprows=header, encoding='latin1', usecols=usecols, sep='\t', decimal=',',
                      skip_blank_lines=False, na_values=['--,---', 'no sensor'])
@@ -1261,4 +1272,3 @@ def read_fsgo2(fname: str) -> (pd.DataFrame, dict):
     df.index.name = 'date_time'
 
     return df, metadata
-

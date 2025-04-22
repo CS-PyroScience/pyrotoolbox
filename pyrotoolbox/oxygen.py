@@ -254,7 +254,7 @@ def hPa_to_mgL(data, temperature, salinity):
     return hPa_to_uM(data, temperature, salinity) * 31.999 / 1000
 
 
-def calc_tau(dphi: float, f: float) -> float:
+def _calc_tau(dphi: float, f: float) -> float:
     """ calculate lifetime from phase angle and modulation frequency
 
     :param dphi: phase angle in °
@@ -283,12 +283,12 @@ def _calc_tau0_20_and_ksv_20(dphi0, dphi100, temp0, temp100, pressure, humidity,
     :param ft: sensor constant in 1/K (hardly used)
     :param freq: modulation frequency in Hz
     """
-    tau0 = calc_tau(dphi0, freq) * 1e6  # convert to µs
-    tau100 = calc_tau(dphi100, freq) * 1e6  # convert to µs
+    tau0 = _calc_tau(dphi0, freq) * 1e6  # convert to µs
+    tau100 = _calc_tau(dphi100, freq) * 1e6  # convert to µs
     pO2 = calc_pressure_and_water_corrected_pO2(pressure, temp100, humidity, percentO2)
 
-    tau0_20 = calc_tau0_20(tau0, temp0, tt)
-    ksv_20 = calc_ksv_20(tau0_20, tau100, pO2, temp100, f, m, kt, tt, mt, ft)
+    tau0_20 = _calc_tau0_20(tau0, temp0, tt)
+    ksv_20 = _calc_ksv_20(tau0_20, tau100, pO2, temp100, f, m, kt, tt, mt, ft)
     return tau0_20, ksv_20
 
 
@@ -317,9 +317,9 @@ def calculate_pO2(dphi, temperature, dphi0, dphi100, temp0, temp100, pressure, h
     """
     tau0_20, ksv_20 = _calc_tau0_20_and_ksv_20(dphi0, dphi100, temp0, temp100, pressure, humidity, percentO2, f, m, kt,
                                                tt, mt, ft, freq)
-    tau = calc_tau(dphi, freq) * 1e6
+    tau = _calc_tau(dphi, freq) * 1e6
 
-    return calc_pO2(tau, temperature, tau0_20, ksv_20, f, m, kt, tt, mt, ft)
+    return _calc_pO2(tau, temperature, tau0_20, ksv_20, f, m, kt, tt, mt, ft)
 
 
 def calculate_pO2_from_calibration(dphi, temperature, calibration: dict):
@@ -370,7 +370,7 @@ elif sys.platform == 'win32':
 else:
     print('Warning: calculating oxygen values from dphi is not supported on this operating system.', file=sys.stderr)
 
-def calc_tau0_20(tau0: float, temperature: float, tt: float):
+def _calc_tau0_20(tau0: float, temperature: float, tt: float):
     """ Calculate tau0 for 20°C
 
     :param tau0: tau0 in µs
@@ -380,8 +380,8 @@ def calc_tau0_20(tau0: float, temperature: float, tt: float):
     """
     return calc_oxygen.calc_tau0_20(ctypes.c_double(tau0), ctypes.c_double(temperature), ctypes.c_double(tt))
 
-def calc_ksv_20(tau0_20: float, tau100: float, pO2: float, temp100: float, f: float, m: float, kt: float, tt: float,
-                mt: float, ft: float):
+def _calc_ksv_20(tau0_20: float, tau100: float, pO2: float, temp100: float, f: float, m: float, kt: float, tt: float,
+                 mt: float, ft: float):
     """ Calculate ksv at 20°C.
 
     :param tau0_20: tau at 0% O2 and 20°C
@@ -402,8 +402,8 @@ def calc_ksv_20(tau0_20: float, tau100: float, pO2: float, temp100: float, f: fl
                                     ctypes.c_double(kt), ctypes.c_double(tt), ctypes.c_double(mt), ctypes.c_double(ft))
 
 
-def calc_pO2(tau: Iterable[float] | float, temperature: Iterable[float] | float, tau0_20: Iterable[float] | float,
-             ksv_20: Iterable[float] | float, f: float, m: float, kt: float, tt: float, mt: float, ft: float) -> pd.Series | float:
+def _calc_pO2(tau: Iterable[float] | float, temperature: Iterable[float] | float, tau0_20: Iterable[float] | float,
+              ksv_20: Iterable[float] | float, f: float, m: float, kt: float, tt: float, mt: float, ft: float) -> pd.Series | float:
     """ Calculate pO2 in hPa
 
     :param tau: tau in µs (iterable or float)
