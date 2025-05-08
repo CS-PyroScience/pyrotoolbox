@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath('..'))
 project = 'pyrotoolbox'
 copyright = '2025, PyroScience GmbH'
 author = 'Christoph Staudinger'
-version = '1.3b'
+version = '1.5b'
 
 
 # -- General configuration ---------------------------------------------------

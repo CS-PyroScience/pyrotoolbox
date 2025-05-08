@@ -28,3 +28,12 @@ own unit conversions
 .. automodule:: pyrotoolbox.oxygen
     :noindex:
     :members: vapour_pressure_water, calc_pressure_and_water_corrected_pO2, calc_oxygen_solubility
+
+Examples
+---------
+
+.. toctree::
+    Demo2
+
+.. toctree::
+    Demo4 O2 unit conversion
