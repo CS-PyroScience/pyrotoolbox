@@ -5,6 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "pyrotoolbox"
 version = "1.5b"
+readme = "README.md"
 dependencies = [
     'pandas', 'numpy', 'plotly', 'PyQt5', 'pyqtgraph', 'lmfit', 'reportlab', 'matplotlib'
 ]
@@ -31,7 +32,7 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://pyroscience.com"
+Homepage = "https://github.com/PyroScience-GmbH/pyrotoolbox"
 
 [project.scripts]
 PyroHtmlReporter = "pyrotoolbox.HtmlReporter:main"
