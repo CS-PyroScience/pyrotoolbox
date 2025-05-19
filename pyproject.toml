@@ -4,15 +4,18 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyrotoolbox"
-version = "1.5b"
+version = "1.7b"
 readme = "README.md"
 dependencies = [
-    'pandas', 'numpy', 'plotly', 'PyQt5', 'pyqtgraph', 'lmfit', 'reportlab', 'matplotlib'
+    'pandas', 'numpy', 'plotly', 'lmfit', 'reportlab'
 ]
 requires-python = ">=3.10"
 authors = [
   {name = "Christoph Staudinger", email = "cs@pyroscience.com"},
 ]
+
+[project.optional-dependencies]
+fireresponse = ['PyQt5', 'pyqtgraph']
 
 [tool.hatch.build]
 exclude = [
