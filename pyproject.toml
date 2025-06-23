@@ -36,6 +36,7 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/PyroScience-GmbH/pyrotoolbox"
+Documentation = "https://pyrotoolbox.readthedocs.io/en/latest/"
 
 [project.scripts]
 PyroHtmlReporter = "pyrotoolbox.HtmlReporter:main"
