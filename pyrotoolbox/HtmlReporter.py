@@ -20,6 +20,7 @@ from pyrotoolbox.parsers import *
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
+import os
 
 
 ANALYTE_TO_AXES_LABEL = {'oxygen_hPa': 'pO<sub>2</sub> [hPa]', 'oxygen_torr': 'pO<sub>2</sub> [torr]',
@@ -91,37 +92,52 @@ def generate_multi_channel_plots(df_list: list, m_list: list, plot_raw: bool=Tru
     # check if any status problems occurred. -> if so add status plot, else add statement that nothing bad happened
     analytes = []
     status_errors = False
-    for df in df_list:
+    df_list_o2_pH = []
+    m_list_o2_pH = []
+    df_list_optT = []
+    m_list_optT = []
+    for df, m in zip(df_list, m_list):
         for a in ('oxygen_hPa', 'oxygen_torr', 'oxygen_%O2', 'oxygen_%airsat', 'oxygen_µM', 'oxygen_µg/L',
-                  'oxygen_mg/L', 'oxygen_mL/L', 'pH', 'optical_temperature'):
+                  'oxygen_mg/L', 'oxygen_mL/L', 'pH'):
             if a in [i[4:] for i in df.columns] or a in df.columns:
+                df_list_o2_pH.append(df)
+                m_list_o2_pH.append(m)
                 analytes.append(a)
+                break
+            elif 'optical_temperature' in [i[4:] for i in df.columns] or 'optical_temperature' in df.columns:
+                df_list_optT.append(df)
+                m_list_optT.append(m)
                 break
         if not status_errors and sum(df['status']) > 0:
             status_errors = True
 
-    rows = len(set(analytes)) + 1 + int(status_errors)
+    used_analytes = sorted(set(analytes))
 
-    if plot_raw:
-        rows += 1
+    analyte_rows = len(used_analytes)
+
+    rows = analyte_rows + 1 + int(status_errors) + int(plot_raw)
 
     fig = make_subplots(rows=rows, cols=1,
                         shared_xaxes=True,
                         vertical_spacing=0.03)
 
-    for analyte, df, m in zip(analytes, df_list, m_list):
-        i = list(set(analytes)).index(analyte)
+    for analyte, df, m in zip(analytes, df_list_o2_pH, m_list_o2_pH):
+        i = used_analytes.index(analyte)
         plot_analyte_to_subplot(df, analyte, fig, i + 1, 1, name=f'{m["device"]} ({m["uid"]}) Ch. {m["channel"]}',
                                 legendgroup=str(i))
 
+    for df, m in zip(df_list_optT, m_list_optT):
+        plot_analyte_to_subplot(df, 'optical_temperature', fig, analyte_rows + 1, 1, name=f'{m["device"]} ({m["uid"]}) Ch. {m["channel"]} optT',
+                                legendgroup='T')
+
     for df, m in zip(df_list, m_list):
-        plot_temperature_to_subplot(df, fig, len(set(analytes)) + 1, 1,
-                                    name=f'{m["device"]} ({m["uid"]}) Ch. {m["channel"]}', legendgroup='T')
-        if sum(df['status']) > 0:
-            plot_status_to_subplot(df, fig, len(set(analytes)) + 2, 1, name_prefix=f'{m["device"]} ({m["uid"]}) Ch. {m["channel"]} ',
+        plot_temperature_to_subplot(df, fig, analyte_rows + 1, 1,
+                                    name=f'{m["device"]} ({m["uid"]}) Ch. {m["channel"]} Pt100', legendgroup='T')
+        if status_errors:
+            plot_status_to_subplot(df, fig, analyte_rows + 2, 1, name_prefix=f'{m["device"]} ({m["uid"]}) Ch. {m["channel"]} ',
                                    legendgroup='status')
         if plot_raw:
-            plot_raw_to_subplot(df, fig, len(set(analytes)) + 3, 1, name=f'{m["device"]} ({m["uid"]}) Ch. {m["channel"]} ',
+            plot_raw_to_subplot(df, fig, analyte_rows + 2 + int(status_errors), 1, name=f'{m["device"]} ({m["uid"]}) Ch. {m["channel"]} ',
                                    legendgroup='raw')
 
         add_comments_to_plots(df, fig)
@@ -310,7 +326,7 @@ def plot_analyte_to_subplot(df: pd.DataFrame, unit, fig, row: int, col: int, nam
     elif unit == 'optical_temperature':
         if not name:
             name = 'temperature (optical)'
-        fig = make_subplots()  # new plot without secondary y-axis
+        #fig = make_subplots()  # new plot without secondary y-axis
         fig.add_trace(go.Scatter(x=df.index, y=df['optical_temperature'], name=name,
                                  legendgroup=legendgroup), row=row, col=col)
         fig.update_yaxes(title_text='T [°C]', row=row, col=col)
@@ -333,6 +349,8 @@ def plot_temperature_to_subplot(df: pd.DataFrame, fig, row: int, col: int, name=
     :param name: optional, force a name for the trace
     :param legendgroup: can be used to adjust legend groups
     """
+    if 'sample_temperature' not in df:
+        return
     if not name:
         name = 'T'
     fig.add_trace(go.Scatter(x=df.index, y=df['sample_temperature'], name=name, legendgroup=legendgroup),
@@ -745,12 +763,10 @@ def remove_duplicate_xdata(s: str):
     """
     import time
     start = time.time()
-    print(f'start size: {len(s)}')
     xdatas = {}
     # go through string and search for definitions of x data
     while True:
         m = re.search(r',"x":(\[.*?])', s)
-        print(m)
         if m is None: # break if nothing (more) is found
             break
         xdata = m.groups()[0]  # get xdata
@@ -759,7 +775,6 @@ def remove_duplicate_xdata(s: str):
         xname = f'xdata{len(xdatas)}'  # create variable name
         xdatas[xname] = xdata
         s = s.replace(xdata, xname)  # replace all occurrences with variable
-    print(f'found {len(xdatas)} different xdata in {time.time() - start} s')
 
     # insert variable definitions
     insert_string = ''
@@ -767,8 +782,6 @@ def remove_duplicate_xdata(s: str):
         insert_string += f'const {name}={data};\n'
     insert_point = s.rfind('<script type="text/javascript">') + 31
     s = s[:insert_point]+ insert_string + s[insert_point:]
-    print(f'final size: {len(s)}')
-    print(f'finished in {time.time() - start} s')
     return s
 
 
@@ -795,6 +808,7 @@ def main():
     for path in args.logfiles:
         if 'StatusLegend.txt' in path or "TempPT100Port.txt" in path:
             print(f'Skipping file "{path}"')
+            continue
         print(f'Processing: "{path}"')
         df, m = parse(path)
         df = df.iloc[args.skipfirst:len(df)-args.skiplast]

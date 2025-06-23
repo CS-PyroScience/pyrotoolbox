@@ -223,13 +223,9 @@ def calculate_pH_with_prospective_drift_compensation(R, temperature,
                                                      start_timestamp = None):
     """ apply prospective pH drift compensation to a pH measurement.
 
-    currently we have identified two main sources of drift for the pH sensor materials:
-        - dye hydrolysis or leaching in water (strongly temperature dependent)
-        - photo-bleaching during a measurement
+    The effect on the sensors is assumed to be only a decrease in Top.
 
-    The effect on the sensors is assumed to be only a decrease in Top (due to reduced dye content)
-
-    :param R: R-values
+    :param R: R-values, pandas Series or DataFrame with time index
     :param temperature: temperature data
     :param salinity: salinity data
     :param calibration: calibration dictionary as created by the parser functions
