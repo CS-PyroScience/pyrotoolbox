@@ -8,6 +8,6 @@ publish:
 	cp dist/* ~/Server/internAT/9_Software/Python/pyrotoolbox
 
 doku:
-	sphinx-build doc doc/_build -b simplepdf
+	sphinx-build docs docs/_build -b simplepdf
 
 all: test build doku publish

@@ -23,6 +23,7 @@ Independent of the input format the columns and metadata-names should be identic
 expect these naming conventions.
 """
 
+import decimal
 import glob
 import sys
 
@@ -55,6 +56,8 @@ def parse(fname: str) -> tuple[pd.DataFrame, dict]:
         return read_aquaphoxlogger(fname)
     elif firstline.startswith('#Log_File'):
         return read_fsgo2(fname)
+    elif firstline.startswith('#FDO2 Logger'):
+        return read_fdo2_logger(fname)
     else:
         raise ValueError(f'Could not identify logfile: {fname}. Exiting.')
 
@@ -1273,3 +1276,166 @@ def read_fsgo2(fname: str) -> tuple[pd.DataFrame, dict]:
 
     return df, metadata
 
+
+def read_fdo2_logger(fname: str) -> tuple[pd.DataFrame, dict]:
+    """ Loads and parses a logfile from the FDO2 Logger
+
+    :param fname: path to the logfile
+    :return: (DataFrame, metadata-dict)
+    """
+    lines = []
+    with open(fname, 'r', encoding='latin1') as f:
+        for line in f:
+            lines.append(line[:-1])
+            if len(lines) > 30:
+                break
+
+    metadata = {}
+    metadata['experiment_name'] = ''
+    metadata['experiment_description'] = ''
+
+    metadata['device'] = lines[2].split('\t', maxsplit=1)[1]
+    metadata['firmware'] = lines[3].split('\t', maxsplit=1)[1].replace(',', '.')
+    metadata['uid'] = lines[4].split('\t', maxsplit=1)[1]
+    metadata['software_version'] = lines[1].split('\t', maxsplit=1)[1].replace(',', '.')
+
+    # parse settings
+    settings = {}
+    settings['analyte'] =  'oxygen'
+    for k, v in zip(lines[6].split('\t')[1:], lines[7].split('\t')[1:]):
+        try:
+            v = int(v)
+        except:
+            pass
+        if k == 'temp (m°C)':
+            if v == -300000:
+                settings['temperature'] = 'external sensor'
+            elif v == -299999:
+                settings['temperature'] = 'internal sensor'
+            else:
+                settings['temperature'] = v
+        elif k == 'pressure (ubar)':
+            if v == -1:
+                settings['pressure'] = 'internal sensor'
+            else:
+                settings['pressure'] = v / 1000
+        elif k == 'salinity (mg/L)':
+            settings['salinity'] = v / 1000
+        elif k == 'mode (1=1ms, 8=128ms)':
+            settings['duration'] = f'{2 ** (v - 1)}ms'
+        elif k == 'intensity (0=10%, 7=100%)':
+            settings['intensity'] = ('10%', '15%', '20%', '30%', '40%', '60%', '80%', '100%')[v]
+        elif k == 'amp (4=80x, 6=400x)':
+            settings['amp'] = ('1x', 'unknown', 'unknown', 'unknown', '40x', '200x', '400x')[v]
+        elif k == 'frequency (Hz)':
+            settings['frequency'] = v
+        elif k == 'crcEnable (0=off, 1=on)':
+            settings['crc_enable'] = bool(v)
+        elif k == 'writeLock (13579=locked)':
+            settings['write_lock'] = v == 13579
+        elif k == 'autoMode (bit0=autoFlash, bit1=autoAmp)':
+            settings['auto_flash_duration'] = bool(v & 1)
+            settings['auto_amp'] = bool(v & 2)
+        elif k == 'broadcast interval (ms)':
+            settings['broadcast_interval_ms'] = v
+        else: 
+            raise ValueError(f'Unknown settings register {k}')
+    metadata['settings'] = settings
+						
+    # parse calibration
+    calibration = {}
+    for k, v in zip(lines[8].split('\t')[1:], lines[9].split('\t')[1:]):
+        v = int(v) / 1000
+        if k == 'dphi0 (m°)':
+            calibration['dphi0'] = v
+        elif k == 'dphi100 (m°)':
+            calibration['dphi100'] = v
+        elif k == 'temp0 (m°C)':
+            calibration['temp0'] = v
+        elif k == 'temp100 (m°C)':
+            calibration['temp100'] = v
+        elif k == 'pressure (ubar)':
+            calibration['pressure'] = v
+        elif k == 'humidity (m%RH)':
+            calibration['humidity'] = v
+        elif k == 'f (e-3)':
+            calibration['f'] = v
+        elif k == 'm (e-3)':
+            calibration['m'] = v
+        elif k == 'tt (e-5/K)':
+            calibration['tt'] = round(v / 100, 5)
+        elif k == 'kt (e-5/K)':
+            calibration['kt'] = round(v / 100, 5)
+        elif k == 'bkgdAmp (uV)':
+            calibration['bkgdAmpl'] = v
+        elif k == 'bkgdDphi (m°)':
+            calibration['bkgdDphi'] = v
+        elif k == 'ft (e-6 / K)':
+            calibration['ft'] = round(v / 1000, 6)
+        elif k == 'mt (e-6/K)':
+            calibration['mt'] = round(v / 1000, 6)
+        elif k == 'percentO2 (m%O2)':
+            calibration['percentO2'] = v
+        elif k == 'tempOffset (m°C)':
+            calibration['temp_offset'] = v
+        elif k in ('calFreq (Hz)', 'useKsv (0-1)', 'ksv (e-6/mbar)'):
+            continue
+        else:
+            raise ValueError(f'Unknown calibration register {k}')
+    metadata['calibration'] = calibration
+
+    # parse user calibration
+    user_calibration = {}
+    for k, v in zip(lines[10].split('\t')[1:], lines[11].split('\t')[1:]):
+        v = int(v) / 1000
+        if k == 'dphi0 (m°)':
+            user_calibration['dphi0'] = v
+        elif k == 'dphi100 (m°)':
+            user_calibration['dphi100'] = v
+        elif k == 'temp0 (m°C)':
+            user_calibration['temp0'] = v
+        elif k == 'temp100 (m°C)':
+            user_calibration['temp100'] = v
+        elif k == 'pressure (ubar)':
+            user_calibration['pressure'] = v
+        elif k == 'humidity (m%RH)':
+            user_calibration['humidity'] = v
+        elif k == 'percentO2 (m%O2)':
+            user_calibration['percentO2'] = v
+        elif k == 'm (0.001)':
+            user_calibration['m'] = v
+        elif k == 'crcEnable (0..1)':
+            user_calibration['crc_enable'] = v != 0
+        elif k == 'broadcastInterval (ms)':
+            user_calibration['broadcast_interval_ms'] = v
+        else:
+            raise ValueError(f'Unknown user calibration register {k}')
+    metadata['user_calibration'] = user_calibration
+
+    # get header count
+    header = 13
+
+    if ',' in lines[14].split('\t')[2]:
+        decimal = ','
+    else:
+        decimal = '.'
+
+    df = pd.read_csv(fname, skiprows=header, encoding='latin1', sep='\t', decimal=decimal,
+                     skip_blank_lines=False, index_col=False)
+    df.index = pd.to_datetime(df.iloc[:, 0])
+    df.drop(df.columns[0], axis=1, inplace=True)
+
+    rename_dict = {
+        'Time (s)': 'time_s',
+        'Oxygen (hPa)': 'oxygen_hPa',
+        'Temperature (°C)': 'sample_temperature',
+        'dphi (°)': 'dphi',
+        'Signal Intensity (mV)': 'signal_intensity',
+        'Ambient Light (mV)': 'ambient_light',
+        'Pressure (mbar)': 'pressure',
+        'Humidity (%RH)': 'humidity',
+    }
+    df.rename(columns=rename_dict, inplace=True)
+    df.index.name = 'date_time'
+
+    return df, metadata
