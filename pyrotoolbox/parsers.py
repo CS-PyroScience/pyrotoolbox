@@ -59,7 +59,7 @@ def parse(fname: str) -> tuple[pd.DataFrame, dict]:
         raise ValueError(f'Could not identify logfile: {fname}. Exiting.')
 
 
-def read_workbench(fname: str) -> (pd.DataFrame, dict):
+def read_workbench(fname: str) -> tuple[pd.DataFrame, dict]:
     """ Loads and parses a Workbench file and returns a pandas DataFrame and a dictionary with metadata
 
     :param fname: file name of the logfile
@@ -415,7 +415,7 @@ def _parse_workbench_calibration(analyte: str, line1: str, line2: str) -> dict:
     return calibration
 
 
-def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
+def read_fireplate_workbench(fname: str) -> tuple[pd.DataFrame, dict]:
     """ Loads and parses a Workbench file of a fireplate and returns a pandas DataFrame and a dictionary with metadata
 
     :param fname: path to the lofile
@@ -600,7 +600,7 @@ def read_fireplate_workbench(fname: str) -> (pd.DataFrame, dict):
     return df, metadata
 
 
-def read_developertool(fname: str) -> (pd.DataFrame, dict):
+def read_developertool(fname: str) -> tuple[pd.DataFrame, dict]:
     """ Loads and parses a logfile from the PyroDeveloperTool
 
     :param fname: path to the logfile
@@ -1010,7 +1010,7 @@ def read_developertool_directory(pattern: str = '*.txt'):
     return data, metadata, filenames
 
 
-def read_aquaphoxlogger(fname: str) -> (pd.DataFrame, dict):
+def read_aquaphoxlogger(fname: str) -> tuple[pd.DataFrame, dict]:
     """ Loads and parses a logfile from an AquapHOx-Logger
 
     :param fname: path to the logfile
@@ -1136,7 +1136,7 @@ def read_aquaphoxlogger(fname: str) -> (pd.DataFrame, dict):
     return df, metadata
 
 
-def read_fsgo2(fname: str) -> (pd.DataFrame, dict):
+def read_fsgo2(fname: str) -> tuple[pd.DataFrame, dict]:
     """ Loads and parses a logfile from a FSGO2
 
     :param fname: path to the logfile
@@ -1272,3 +1272,4 @@ def read_fsgo2(fname: str) -> (pd.DataFrame, dict):
     df.index.name = 'date_time'
 
     return df, metadata
+
