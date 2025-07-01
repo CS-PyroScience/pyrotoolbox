@@ -123,7 +123,7 @@ def generate_multi_channel_plots(df_list: list, m_list: list, plot_raw: bool=Tru
 
     for analyte, df, m in zip(analytes, df_list_o2_pH, m_list_o2_pH):
         i = used_analytes.index(analyte)
-        plot_analyte_to_subplot(df, analyte, fig, i + 1, 1, name=f'{m["device"]} ({m["uid"]}) Ch. {m["channel"]}',
+        plot_analyte_to_subplot(df, analyte, fig, i + 1, 1, name=f'{m["device"]} ({m["uid"]}) Ch. {m.get("channel", 1)}',
                                 legendgroup=str(i))
 
     for df, m in zip(df_list_optT, m_list_optT):
@@ -132,12 +132,12 @@ def generate_multi_channel_plots(df_list: list, m_list: list, plot_raw: bool=Tru
 
     for df, m in zip(df_list, m_list):
         plot_temperature_to_subplot(df, fig, analyte_rows + 1, 1,
-                                    name=f'{m["device"]} ({m["uid"]}) Ch. {m["channel"]} Pt100', legendgroup='T')
+                                    name=f'{m["device"]} ({m["uid"]}) Ch. {m.get("channel", 1)} Pt100', legendgroup='T')
         if status_errors:
-            plot_status_to_subplot(df, fig, analyte_rows + 2, 1, name_prefix=f'{m["device"]} ({m["uid"]}) Ch. {m["channel"]} ',
+            plot_status_to_subplot(df, fig, analyte_rows + 2, 1, name_prefix=f'{m["device"]} ({m["uid"]}) Ch. {m.get("channel", 1)} ',
                                    legendgroup='status')
         if plot_raw:
-            plot_raw_to_subplot(df, fig, analyte_rows + 2 + int(status_errors), 1, name=f'{m["device"]} ({m["uid"]}) Ch. {m["channel"]} ',
+            plot_raw_to_subplot(df, fig, analyte_rows + 2 + int(status_errors), 1, name=f'{m["device"]} ({m["uid"]}) Ch. {m.get("channel", 1)} ',
                                    legendgroup='raw')
 
         add_comments_to_plots(df, fig)
@@ -171,7 +171,7 @@ def make_comparison_report(df_list, m_list, buf=None):
     s += '<h2>Channels</h2>\n'
     s += '<ul>\n'
     for m in m_list:
-        s += f'<li>{m["device"]} ({m["uid"]}) Ch. {m["channel"]}: {m["experiment_description"]}</li>\n'
+        s += f'<li>{m["device"]} ({m["uid"]}) Ch. {m.get("channel", 1)}: {m["experiment_description"]}</li>\n'
     s += '</ul>\n'
 
     s += '<h2>Plots</h2>\n'
