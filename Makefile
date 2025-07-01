@@ -10,4 +10,7 @@ publish:
 doku:
 	sphinx-build docs docs/_build -b simplepdf
 
+publish_pypi:
+	python3 -m twine upload dist/*
+
 all: test build doku publish
