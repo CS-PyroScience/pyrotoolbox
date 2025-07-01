@@ -1387,7 +1387,10 @@ def read_fdo2_logger(fname: str) -> tuple[pd.DataFrame, dict]:
     # parse user calibration
     user_calibration = {}
     for k, v in zip(lines[10].split('\t')[1:], lines[11].split('\t')[1:]):
-        v = int(v) / 1000
+        if int(v) == -1000:
+            v = None
+        else:
+            v = int(v) / 1000
         if k == 'dphi0 (m°)':
             user_calibration['dphi0'] = v
         elif k == 'dphi100 (m°)':
@@ -1413,9 +1416,13 @@ def read_fdo2_logger(fname: str) -> tuple[pd.DataFrame, dict]:
     metadata['user_calibration'] = user_calibration
 
     # get header count
-    header = 13
+    header = 10
+    while 'DateTime' not in lines[header]:
+        header += 1
+        if header > len(lines):
+            raise ValueError('Could not find start of data')
 
-    if ',' in lines[14].split('\t')[2]:
+    if ',' in lines[header+1].split('\t')[2]:
         decimal = ','
     else:
         decimal = '.'
