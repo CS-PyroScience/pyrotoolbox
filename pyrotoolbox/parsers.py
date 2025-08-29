@@ -393,10 +393,12 @@ def _parse_workbench_calibration(analyte: str, line1: str, line2: str) -> dict:
     else:
         print('Warning! Unknown analyte. Please update!', file=sys.stderr)
         return {}
-    # Bugfix for workbench 1.5.4.2482
+    # Bugfix for workbench 1.5.4.2482 and pH
     if line1.startswith('Calibration:WellNr'):
         line1 = line1.replace('Calibration:WellNr\t', 'Calibration:\tWellNr')
         line2 = '\t' + line2.replace('/t#', '')
+    if line2.endswith('Not calibrated'):
+        return {k: None for k in rename_dict.values()}
     for name, value in zip(line1.split('\t')[1:], line2.split('\t')[1:]):
         if name in rename_dict:
             name = rename_dict[name]
