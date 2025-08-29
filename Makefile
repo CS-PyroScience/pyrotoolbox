@@ -2,7 +2,7 @@ build:
 	python3 -m build
 
 black:
-	black --line-length 120 pyrotoolbox/*.py
+	black --line-length 120 */*.py
 
 test:
 	python3 -m unittest discover -v
