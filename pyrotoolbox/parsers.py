@@ -413,7 +413,7 @@ def _parse_workbench_calibration(analyte: str, line1: str, line2: str) -> dict:
                 value = duparser.parse(value, dayfirst=True)
         else:
             value = round(float(value), 6)
-        if name in ('kt', 'tt'):  # convert from %/K to 1/K
+        if name in ('kt', 'tt') and isinstance(value, float):  # convert from %/K to 1/K
             value /= 100
             value = round(value, 6)
         calibration[name] = value
