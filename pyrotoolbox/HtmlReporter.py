@@ -20,6 +20,7 @@ from pyrotoolbox.parsers import *
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
+import os
 
 
 ANALYTE_TO_AXES_LABEL = {'oxygen_hPa': 'pO<sub>2</sub> [hPa]', 'oxygen_torr': 'pO<sub>2</sub> [torr]',
