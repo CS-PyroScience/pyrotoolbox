@@ -1,11 +1,12 @@
 Welcome to pyrotoolbox's documentation!
 ========================================
 
-This is a collection of different tools which are useful for data processing of PyroScience Data.
-It is only intended for internal use!
+This is a collection of different tools which are useful for data processing of PyroScience data. This module
+contains functions to parse data and to re-calculate it.
 
 
 .. toctree::
+    Installation
     Parsers
     Oxygen Calculation Tools
     pH Calculation Tools
