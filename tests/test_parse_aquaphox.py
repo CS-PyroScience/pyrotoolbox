@@ -790,6 +790,104 @@ class AquapHOx_410(unittest.TestCase):
             {k: np.nan if np.isnan(v) else v for k, v in df.iloc[1].to_dict().items()},
         )
 
+    def test_load_f5(self):
+        file1 = "APHOX-LX_PHCAPPK8T_25480029_6000.txt"
+        df, m = read_aquaphoxlogger(self.directory + file1)
+        self.assertEqual(
+            {
+                "experiment_name": "PH6000",
+                "experiment_description": "pH_APHOX_6000",
+                "device": "AquapHOx-LX",
+                "uid": "2418380562951354",
+                "device_serial": "25480029",
+                "firmware": "410:7",
+                "software_version": "Firmware 410:7",
+                "channel": "1",
+                "settings": {
+                    "temperature": "external sensor",
+                    "pressure": 1013.0,
+                    "salinity": 30.0,
+                    "duration": "16ms",
+                    "intensity": "30%",
+                    "amp": "400x",
+                    "frequency": 3000,
+                    "crc_enable": False,
+                    "write_lock": False,
+                    "auto_flash_duration": False,
+                    "auto_amp": True,
+                    "analyte": "pH",
+                    "fiber_type": "1 mm",
+                    "referenceMode": "smart averaging",
+                    "refDurationAveragingMode": 20,
+                    "refDurationStandardMode": 50,
+                    "timeLimitSmartAveragingMode ": 10,
+                },
+                "calibration": {
+                    "R1": 1.795,
+                    "pH1": 0.0,
+                    "temp1": 20.0,
+                    "salinity1": 7.5,
+                    "R2": 0.052,
+                    "pH2": 14.0,
+                    "temp2": 20.0,
+                    "salinity2": 7.5,
+                    "offset": 0.0,
+                    "dphi_ref": 57.8,
+                    "attenuation_coefficient": 0.0339,
+                    "bkgdAmpl": 0.0,
+                    "bkgdDphi": 0.0,
+                    "dsf_dye": 0.9047,
+                    "dtf_dye": -0.00567,
+                    "pka": 8.092,
+                    "slope": 1.034,
+                    "bottom_t": -0.001108,
+                    "top_t": -0.000803,
+                    "slope_t": 0.0,
+                    "pka_t": -0.01628,
+                    "pka_is1": 0.97,
+                    "pka_is2": 0.126,
+                    "date_calibration_acid": None,
+                    "date_calibration_base": None,
+                    "date_calibration_offset": None,
+                },
+                "sensor_code": "FID7-808-926",
+            },
+            {k: v for k, v in m.items() if k != "parser_version"},
+        )
+        self.assertEqual(
+            [
+                "status",
+                "dphi",
+                "sample_temperature",
+                "case_temperature",
+                "signal_intensity",
+                "ambient_light",
+                "pressure",
+                "humidity",
+                "pH",
+                "R",
+                "time_s",
+            ],
+            list(df.columns),
+        )
+        self.assertEqual(2597, len(df))
+        self.assertDictEqual(
+            {
+                "status": 0.0,
+                "dphi": 15.024,
+                "sample_temperature": 20.236,
+                "case_temperature": 21.14,
+                "signal_intensity": 276.519,
+                "ambient_light": -0.184,
+                "pressure": 1003.02,
+                "humidity": 6.695,
+                "pH": np.nan,
+                "R": 2677.215,
+                "time_s": 300.0,
+            },
+            {k: np.nan if np.isnan(v) else v for k, v in df.iloc[1].to_dict().items()},
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
