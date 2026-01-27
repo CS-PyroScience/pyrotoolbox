@@ -842,7 +842,7 @@ def _parse_developertool_settings(line1: str, line2: str) -> dict:
         elif name == "intensity (0=10%, 7=100%)":
             d["intensity"] = ("10%", "15%", "20%", "30%", "40%", "60%", "80%", "100%")[value]
         elif name == "amp (3=40x, 4=80x, 5=200x, 6=400x)":
-            d["amp"] = ("1x", "unknown", "unknown", "unknown", "40x", "200x", "400x")[value]
+            d["amp"] = ("1x", "unknown", "unknown", "40x", "80x", "200x", "400x")[value]
         elif name == "frequency (Hz)":
             d["frequency"] = value
         elif name == "crcEnable":
