@@ -231,13 +231,14 @@ class FireResponse(QMainWindow):
         except Exception as e:
             QMessageBox.warning(self, 'Error', f'Error while loading file: {fname}:\n{e}', QMessageBox.Ok)
             return
-        self.df = df
+        df['datetime'] = df.index
+        self.df = df.set_index('time_s', inplace=False)
         meta['file_type'] = 'workbench'
         self.meta = meta
         self.path, self.fname = os.path.split(fname)
         self.trace_combo.currentTextChanged.disconnect()
         for c in df.columns:
-            if c in ('time_s', 'ambient_light', 'status', 'pressure'):
+            if c in ('time_s', 'ambient_light', 'status', 'pressure', 'datetime'):
                 continue
             self.trace_combo.addItem(c)
         self.trace_combo.setCurrentIndex(-1)
@@ -252,6 +253,7 @@ class FireResponse(QMainWindow):
             df = pd.read_csv(fname, index_col=0, parse_dates=True)
         except Exception as e:
             QMessageBox.warning(self, 'Error', f'Error while loading file: {fname}: {e}', QMessageBox.Ok)
+            return
         self.df = df
         self.meta = {'file_type': 'csv'}
         self.path, self.fname = os.path.split(fname)
@@ -267,7 +269,7 @@ class FireResponse(QMainWindow):
         if self.df is None:
             return
         self.trace_combo.setEnabled(False)
-        self.overview_plot.plotItem.plot(self.df.index.astype(np.int64)/1e9, self.df[trace], pen=pg.mkPen(width=3))
+        self.overview_plot.plotItem.plot(list(self.df.index), list(self.df[trace]), pen=pg.mkPen(width=3))
         self.overview_plot.setEnabled(True)
         self.overview_plot.autoRange()
 
@@ -415,7 +417,7 @@ class FireResponse(QMainWindow):
         if response.cut_data.empty or response.onset_ts != response.onset_ts:  # check if onset_ts is not NaN
             return
         d = response.cut_data.copy()
-        d.index = (d.index - response.onset_ts).total_seconds()
+        d.index = d.index - response.onset_ts
         plot_widget.plot(np.array(d.index), np.array(d), pen=pg.mkPen(width=3))
         onset_inf_line = pg.InfiniteLine(0, pen=pg.mkPen(width=3, color='k'), movable=True)
         onset_inf_line.sigPositionChangeFinished.connect(response.on_onset_line_moved)
@@ -438,7 +440,7 @@ class FireResponse(QMainWindow):
         if response.cut_data.empty or response.onset_ts != response.onset_ts:  # check if onset_ts is not NaN
             return
         d = response.cut_data.copy()
-        d.index = (d.index - response.onset_ts).total_seconds()
+        d.index = d.index - response.onset_ts
         ax.plot(d.index, d.array)
         ax.axvline(0, color='k', linewidth=0.5)
         ax.axvline(response.t63, label='t$_{{63}}$ = {:.2f}'.format(response.t63), color='r')
@@ -480,8 +482,8 @@ class FireResponse(QMainWindow):
 
     def get_response_df(self) -> pd.DataFrame:
         df = pd.DataFrame(index=range(len(self.responses)))
-        df['start'] = [dt.datetime.utcfromtimestamp(i.start).strftime('%Y-%m-%d %H:%M:%S') for i in self.responses]
-        df['end'] = [dt.datetime.utcfromtimestamp(i.end).strftime('%Y-%m-%d %H:%M:%S') for i in self.responses]
+        df['start'] = [i.start for i in self.responses]
+        df['end'] = [i.end for i in self.responses]
         df['threshold [%]'] = [i.threshold for i in self.responses]
         df['Start Value'] = [i.from_value for i in self.responses]
         df['End Value'] = [i.to_value for i in self.responses]
@@ -608,7 +610,10 @@ class ResponseReportDialog(QDialog):
         self.experiment_description.setText(self.meta.get('experiment_description', 'no description'))
         self.operator_edit = QLineEdit()
         self.date_measured_edit = QLineEdit()
-        self.date_measured_edit.setText(self.data.index[0].strftime('%Y-%m-%d'))
+        try:
+            self.date_measured_edit.setText(self.data['datetime'].iloc[0].strftime('%Y-%m-%d'))
+        except KeyError:
+            self.date_measured_edit.setText('unknown')
         self.date_evaluated_edit = QLineEdit()
         self.date_evaluated_edit.setText(dt.datetime.now().strftime('%Y-%m-%d'))
         self.device_id_edit = QLineEdit()
@@ -616,7 +621,7 @@ class ResponseReportDialog(QDialog):
         self.channel_edit = QLineEdit()
         self.channel_edit.setText(str(self.meta.get('Channel', 'unknown channel')))
         self.sampling_interval_edit = QLineEdit()
-        self.sampling_interval_edit.setText('{:.1f} s'.format((self.data.index[-1] - self.data.index[0]).total_seconds()/len(self.data)))
+        self.sampling_interval_edit.setText('{:.1f} s'.format((self.data.index[-1] - self.data.index[0])/len(self.data)))
         self.add_plots_cb = QCheckBox('add plots')
         self.add_plots_cb.setChecked(True)
 
@@ -798,8 +803,7 @@ class Response(QObject):
 
     @property
     def cut_data(self):
-        return self.data.loc[dt.datetime.utcfromtimestamp(self.start).strftime('%Y-%m-%d %H:%M:%S.%f'): dt.datetime.utcfromtimestamp(self.end).strftime('%Y-%m-%d %H:%M:%S.%f'), self.trace]
-
+        return self.data.loc[self.start: self.end, self.trace]
 
     def set_threshold(self, value: float):
         self.threshold = value
@@ -839,12 +843,12 @@ class Response(QObject):
         self.onset_ts, self.t63_ts, self.t90_ts, self.t95_ts, self.t99_ts = timestamps
         if self.force_onset_ts:
             self.onset_ts = self.force_onset_ts
-        self.t63 = (self.t63_ts - self.onset_ts).total_seconds()
-        self.t90 = (self.t90_ts - self.onset_ts).total_seconds()
-        self.t95 = (self.t95_ts - self.onset_ts).total_seconds()
-        self.t99 = (self.t99_ts - self.onset_ts).total_seconds()
+        self.t63 = self.t63_ts - self.onset_ts
+        self.t90 = self.t90_ts - self.onset_ts
+        self.t95 = self.t95_ts - self.onset_ts
+        self.t99 = self.t99_ts - self.onset_ts
         try:
-            self.temperature = self.data['Sample Temp. (°C)'][dt.datetime.utcfromtimestamp(self.start): dt.datetime.utcfromtimestamp(self.end)].mean()
+            self.temperature = self.data['Sample Temp. (°C)'][self.start: self.end].mean()
         except KeyError:
             self.temperature = np.nan
 
