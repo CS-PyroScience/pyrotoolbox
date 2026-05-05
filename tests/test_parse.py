@@ -347,7 +347,7 @@ class AquapHOx(unittest.TestCase):
                     "salinity": 31.0,
                     "duration": "64ms",
                     "intensity": "30%",
-                    "amp": "40x",
+                    "amp": "80x",
                     "frequency": 3000,
                     "crc_enable": False,
                     "write_lock": False,

@@ -22,10 +22,9 @@ The following functions are only valid for devices with Firmware >= 4.10 (releas
 import numpy as np
 import datetime as dt
 import lmfit as lm
-import pandas as pd
 
 
-def _calc_top_and_bottom(calibration: dict) -> (float, float):
+def _calc_top_and_bottom(calibration: dict) -> tuple[float, float]:
     """Calculate top and bottom (upper and lower limit of the R value for 20°C).
 
     :param calibration: dictionary with the following keys:

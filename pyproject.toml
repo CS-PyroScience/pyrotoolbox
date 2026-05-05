@@ -4,10 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyrotoolbox"
-version = "1.11b"
+version = "1.12b"
 readme = "README.md"
 dependencies = [
-    'pandas', 'numpy', 'plotly', 'lmfit', 'reportlab', 'asteval', 'uncertainties'
+    'pandas', 'numpy', 'plotly', 'lmfit'
 ]
 requires-python = ">=3.10"
 authors = [
@@ -24,6 +24,7 @@ exclude = [
   "/Makefile",
   "/doc",
   "/tests",
+  "/venv",
 ]
 
 description = "Collection of tools for data processing of data collected with PyroScience devices."

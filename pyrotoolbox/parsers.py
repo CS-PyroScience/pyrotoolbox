@@ -23,7 +23,6 @@ Independent of the input format the columns and metadata-names should be identic
 expect these naming conventions.
 """
 
-import decimal
 import glob
 import sys
 
@@ -846,7 +845,7 @@ def _parse_developertool_settings(line1: str, line2: str) -> dict:
         elif name == "intensity (0=10%, 7=100%)":
             d["intensity"] = ("10%", "15%", "20%", "30%", "40%", "60%", "80%", "100%")[value]
         elif name == "amp (3=40x, 4=80x, 5=200x, 6=400x)":
-            d["amp"] = ("1x", "unknown", "unknown", "unknown", "40x", "200x", "400x")[value]
+            d["amp"] = ("1x", "unknown", "unknown", "40x", "80x", "200x", "400x")[value]
         elif name == "frequency (Hz)":
             d["frequency"] = value
         elif name == "crcEnable":
@@ -1189,10 +1188,12 @@ def read_aquaphoxlogger(fname: str) -> tuple[pd.DataFrame, dict]:
     df.drop(df.columns[0], axis=1, inplace=True)
     df = (df.select_dtypes(exclude="object") / 1000).combine_first(df)  # to exclude 'comment' column
     df["status"] *= 1000
-    if metadata["settings"]["analyte"] == "pH" and metadata["firmware"].startswith(
-        "410"
+    if (
+        metadata["settings"]["analyte"] == "pH"
+        and metadata["firmware"].startswith("410")
+        and "ldev (0.001 nm)" in df.columns
     ):  # workaround for wrong column name. Might not only be 410
-        df["R (0.000001)"] = df["ldev (0.001 nm)"] / 1000
+        df["R (10e-6)"] = df["ldev (0.001 nm)"] / 1000
         del df["ldev (0.001 nm)"]
 
     rename_dict = {
@@ -1212,7 +1213,7 @@ def read_aquaphoxlogger(fname: str) -> tuple[pd.DataFrame, dict]:
         "percentO2 (0.001 %O2)": "oxygen_%O2",
         "tempOptical (0.001 °C)": "optical_temperature",
         "pH (0.001 pH)": "pH",
-        "R (0.000001)": "R",
+        "R (10e-6)": "R",
         "ldev (0.001 nm)": "ldev",
     }
 

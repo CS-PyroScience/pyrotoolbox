@@ -406,7 +406,6 @@ def calculate_pO2_from_calibration(dphi, temperature, calibration: dict):
     return calculate_pO2(dphi, temperature, **calibration)
 
 
-
 if sys.platform.startswith("linux"):
     calc_oxygen = ctypes.CDLL(os.path.join(os.path.dirname(os.path.realpath(__file__)), "oxycalc.so"))
     calc_oxygen.calc_tau0_20.restype = ctypes.c_double
