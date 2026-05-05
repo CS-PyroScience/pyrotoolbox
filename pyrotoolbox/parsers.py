@@ -549,11 +549,13 @@ def read_fireplate_workbench(fname: str) -> tuple[pd.DataFrame, dict]:
             raise ValueError("Could not find start of data")
 
     if sensor_type == "Oxygen Sensor":
-        # last two are case temp and pressure
         usecols = list(range(0, 3 + len(metadata["channels"]) * 5)) + [
-            3 + len(metadata["channels"]) * 5 + 3,
-            3 + len(metadata["channels"]) * 5 + 8,
+            3 + len(metadata["channels"]) * 5 + 3,  # case temp
         ]
+        if  metadata["software_version"].split('V')[1] >= '1.5.5':  # add pressure
+            usecols.append(3 + len(metadata["channels"]) * 5 + 11)
+        else:
+            usecols.append(3 + len(metadata["channels"]) * 5 + 8)
     elif sensor_type == "Optical Temperature Sensor":
         usecols = list(range(0, 3 + len(metadata["channels"]) * 5))
     elif sensor_type == "pH Sensor":
@@ -590,7 +592,7 @@ def read_fireplate_workbench(fname: str) -> tuple[pd.DataFrame, dict]:
             "<5",
         ],
     )
-    df.index = pd.to_datetime(df.iloc[:, 0] + " " + df.iloc[:, 1], dayfirst=True)
+    df.index = pd.to_datetime(df.iloc[:, 0] + " " + [i.replace(',', '.') for i in df.iloc[:, 1]], format='%d-%m-%Y %H:%M:%S.%f')
     df.drop([df.columns[0], df.columns[1]], axis=1, inplace=True)
 
     def rename_column(column: str):
@@ -647,6 +649,7 @@ def read_fireplate_workbench(fname: str) -> tuple[pd.DataFrame, dict]:
                 status |= 1 << int(i)
         return status
 
+    print(df.columns)
     df.columns = [rename_column(i) for i in df.columns]
 
     for c in list(df.filter(regex="status")):
