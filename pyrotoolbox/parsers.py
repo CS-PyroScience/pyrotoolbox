@@ -550,11 +550,8 @@ def read_fireplate_workbench(fname: str) -> tuple[pd.DataFrame, dict]:
     if sensor_type == "Oxygen Sensor":
         usecols = list(range(0, 3 + len(metadata["channels"]) * 5)) + [
             3 + len(metadata["channels"]) * 5 + 3,  # case temp
+            3 + len(metadata["channels"]) * 5 + 8 + 3 if metadata["settings"]["temperature"].startswith("Optical Temperature") else 0,
         ]
-        if  metadata["software_version"].split('V')[1] >= '1.5.5':  # add pressure
-            usecols.append(3 + len(metadata["channels"]) * 5 + 11)
-        else:
-            usecols.append(3 + len(metadata["channels"]) * 5 + 8)
     elif sensor_type == "Optical Temperature Sensor":
         usecols = list(range(0, 3 + len(metadata["channels"]) * 5))
     elif sensor_type == "pH Sensor":
