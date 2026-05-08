@@ -550,7 +550,7 @@ def read_fireplate_workbench(fname: str) -> tuple[pd.DataFrame, dict]:
     if sensor_type == "Oxygen Sensor":
         usecols = list(range(0, 3 + len(metadata["channels"]) * 5)) + [
             3 + len(metadata["channels"]) * 5 + 3,  # case temp
-            3 + len(metadata["channels"]) * 5 + 8 + 3 if metadata["settings"]["temperature"].startswith("Optical Temperature") else 0,
+            3 + len(metadata["channels"]) * 5 + 8 + 3 * int(metadata["settings"]["temperature"].startswith("Optical Temperature")),
         ]
     elif sensor_type == "Optical Temperature Sensor":
         usecols = list(range(0, 3 + len(metadata["channels"]) * 5))
@@ -645,7 +645,6 @@ def read_fireplate_workbench(fname: str) -> tuple[pd.DataFrame, dict]:
                 status |= 1 << int(i)
         return status
 
-    print(df.columns)
     df.columns = [rename_column(i) for i in df.columns]
 
     for c in list(df.filter(regex="status")):
