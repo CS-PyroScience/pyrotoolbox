@@ -927,7 +927,16 @@ def remove_duplicate_xdata(s: str):
     insert_string = ""
     for name, data in xdatas.items():
         insert_string += f"const {name}={data};\n"
-    insert_point = s.rfind('<script type="text/javascript">') + 31
+    # NOTE: newer plotly versions (>=6.x) no longer emit the
+    # type="text/javascript" attribute on <script> tags, so the previous
+    # exact-string search below silently failed (rfind returned -1),
+    # causing insert_point to become 30 and the xdata definitions to be
+    # inserted into the middle of an unrelated <div style="..."> attribute.
+    # This broke the resulting HTML/JS ("xdata0 is not defined").
+    # Fix: search for the last <script ...> tag regardless of its
+    # attributes.
+    script_tags = list(re.finditer(r"<script[^>]*>", s))
+    insert_point = script_tags[-1].end() if script_tags else len(s)
     s = s[:insert_point] + insert_string + s[insert_point:]
     return s
 
