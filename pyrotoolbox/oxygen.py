@@ -498,15 +498,6 @@ def _calc_pO2(
     :param ft: sensor constant (in 1/K), hardly used
     :return: pO2 in hPa as pd.Series of float
     """
-    if isinstance(tau, (int, float)):
-        tau = [tau]
-    if isinstance(temperature, (int, float)):
-        temperature = [temperature]
-    if isinstance(tau0_20, (int, float)):
-        tau0_20 = [tau0_20]
-    if isinstance(ksv_20, (int, float)):
-        ksv_20 = [ksv_20]
-
     # get the index if there is any
     if isinstance(tau, pd.Series):
         index = tau.index
@@ -518,6 +509,13 @@ def _calc_pO2(
         index = ksv_20.index
     else:
         index = None
+
+    # normalize all inputs to plain lists so length-1 inputs can be broadcast via list repetition below.
+    # (pd.Series/np.ndarray use elementwise "*=", not sequence repetition, which would silently corrupt values)
+    tau = [tau] if isinstance(tau, (int, float)) else list(tau)
+    temperature = [temperature] if isinstance(temperature, (int, float)) else list(temperature)
+    tau0_20 = [tau0_20] if isinstance(tau0_20, (int, float)) else list(tau0_20)
+    ksv_20 = [ksv_20] if isinstance(ksv_20, (int, float)) else list(ksv_20)
 
     # check if length is one or is the same
     maxlen = max(len(tau), len(temperature), len(tau0_20), len(ksv_20))

@@ -750,7 +750,9 @@ def read_developertool(fname: str) -> tuple[pd.DataFrame, dict]:
     df.index = pd.to_datetime(df.iloc[:, 0] + " " + df.iloc[:, 1].astype(str), format="%Y-%m-%d %H:%M:%S %f")
     df.drop([df.columns[0], df.columns[1]], axis=1, inplace=True)
 
-    df = (df.select_dtypes(exclude="object") / 1000).combine_first(df)  # to exclude 'comment' column
+    # to exclude 'comment' column. Sort columns alphabetically (by raw register name) for a stable,
+    # pandas-version-independent column order, since combine_first's own ordering isn't guaranteed.
+    df = (df.select_dtypes(exclude="object") / 1000).combine_first(df).sort_index(axis=1)
     df["status"] *= 1000
     if "R (0.000001)" in df.columns:
         df["R (0.000001)"] /= 1000
@@ -1182,15 +1184,17 @@ def read_aquaphoxlogger(fname: str) -> tuple[pd.DataFrame, dict]:
     )
     df.index = pd.to_datetime(df.iloc[:, 0])
     df.drop(df.columns[0], axis=1, inplace=True)
-    df = (df.select_dtypes(exclude="object") / 1000).combine_first(df)  # to exclude 'comment' column
+    # to exclude 'comment' column. combine_first's own column order isn't guaranteed, so restore the
+    # original (file) order explicitly.
+    df = (df.select_dtypes(exclude="object") / 1000).combine_first(df)[df.columns]
     df["status"] *= 1000
     if (
         metadata["settings"]["analyte"] == "pH"
         and metadata["firmware"].startswith("410")
         and "ldev (0.001 nm)" in df.columns
     ):  # workaround for wrong column name. Might not only be 410
-        df["R (10e-6)"] = df["ldev (0.001 nm)"] / 1000
-        del df["ldev (0.001 nm)"]
+        df.rename(columns={"ldev (0.001 nm)": "R (10e-6)"}, inplace=True)
+        df["R (10e-6)"] /= 1000
 
     rename_dict = {
         "Comment": "comment",

@@ -19521,7 +19521,7 @@ class TestWorkbench_1_5_4_2482(unittest.TestCase):
 
 
 class TestWorkbench_1_5_7_2519(unittest.TestCase):
-    directory = script_dir + "/testdata/workbench_V1.5.7.2519/"
+    directory = script_dir + "/testdata/fireplate_workbench_V1.5.7.2519/"
 
     def test_load_O2(self):
         file1 = "_FirePlate-O2_( Gr.2)_Oxygen.txt"
