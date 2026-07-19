@@ -19,9 +19,10 @@ import pandas as pd
 from pyrotoolbox.parsers import *
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from plotly.offline import get_plotlyjs
+from html import escape
 import numpy as np
 import os
-
 
 ANALYTE_TO_AXES_LABEL = {
     "oxygen_hPa": "pO<sub>2</sub> [hPa]",
@@ -46,36 +47,133 @@ HTML_HEADER1 = """\
 
 HTML_HEADER2 = """\
   <style>
+  :root {
+    color-scheme: light;
+    --bg: #ffffff;
+    --fg: #1a1a1a;
+    --muted: #6b7280;
+    --border: #e2e2e2;
+    --surface: #f7f7f8;
+    --stripe: #f2f2f2;
+    --hover: #eaf1ff;
+    --accent: #2563eb;
+  }
+
   * {
     box-sizing: border-box;
   }
 
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.4;
+  }
+
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 16px 24px 64px;
+  }
+
+  h1, h2 {
+    font-weight: 600;
+  }
+
+  h2 {
+    margin-top: 2.5em;
+    padding-top: 0.6em;
+    border-top: 1px solid var(--border);
+  }
+
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding: 10px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topnav .title {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .topnav nav {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .topnav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.9em;
+  }
+
+  .topnav a:hover {
+    color: var(--accent);
+  }
+
   .row {
     display: flex;
-    margin-left:-5px;
-    margin-right:-5px;
+    margin-left: -5px;
+    margin-right: -5px;
+    flex-wrap: wrap;
   }
 
   .column {
-    flex: 30%;
+    flex: 1 1 30%;
     padding: 5px;
+    min-width: 320px;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    max-width: 100%;
   }
 
   table {
     border-collapse: collapse;
     border-spacing: 0;
-    width: 80%;
-    border: 1px solid #ddd;
+    width: auto;
+    min-width: 40%;
+    border: 1px solid var(--border);
     font-size: 12px;
   }
 
   th, td {
     text-align: left;
-    padding: 8px;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+
+  thead th {
+    background: var(--surface);
   }
 
   tr:nth-child(even) {
-    background-color: #f2f2f2;
+    background-color: var(--stripe);
+  }
+
+  tr:hover {
+    background-color: var(--hover);
+  }
+
+  details.section {
+    margin: 0.5em 0;
+  }
+
+  details.section > summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 4px 0;
   }
 </style>
 </head>
@@ -85,6 +183,33 @@ HTML_HEADER2 = """\
 HTML_FOOTER = """\
 </body>
 </html>
+"""
+
+
+def generate_plotlyjs_script() -> str:
+    """Embed the plotly.js library exactly once, so multiple plots on the same report page
+
+    don't each ship their own multi-megabyte copy while still keeping the report fully
+    self-contained (viewable offline). Every ``fig.to_html()`` call in this module must be
+    passed ``include_plotlyjs=False`` to avoid duplicating the library.
+    """
+    return f"<script>{get_plotlyjs()}</script>\n"
+
+
+def generate_nav(title: str, sections: list) -> str:
+    """Build the sticky top navigation bar shown on every report page.
+
+    :param title: report title shown on the left of the bar
+    :param sections: list of (anchor_id, label) tuples for the sections present on the page
+    """
+    links = "\n".join(f'    <a href="#{anchor}">{label}</a>' for anchor, label in sections)
+    return f"""\
+<header class="topnav">
+  <div class="title">{escape(title)}</div>
+  <nav>
+{links}
+  </nav>
+</header>
 """
 
 
@@ -183,20 +308,22 @@ def generate_multi_channel_plots(df_list: list, m_list: list, plot_raw: bool = T
 
         add_comments_to_plots(df, fig)
 
+    align_legends_to_subplots(fig)
+
     fig.update_layout(
         height=300 * rows,
-        legend_tracegroupgap=max(10, 280 - len(df_list) * 10),
         xaxis_showticklabels=True,
-        legend=dict(groupclick="toggleitem"),
+        hovermode="x unified",
+        hoversubplots="axis",
     )
 
     # add xticklabels back to every axes
     fig.update_layout(**{"xaxis{}_showticklabels".format(i): True for i in range(1, rows)})
 
-    # Set x-axis title
-    fig.update_xaxes(title_text="")
+    # Set x-axis title and add a shared spike line across all subplots
+    fig.update_xaxes(title_text="", showspikes=True, spikemode="across", spikesnap="cursor", spikedash="dot")
 
-    return remove_duplicate_xdata(fig.to_html(full_html=False))
+    return remove_duplicate_xdata(fig.to_html(full_html=False, include_plotlyjs=False))
 
 
 def make_comparison_report(df_list, m_list, buf=None):
@@ -208,18 +335,22 @@ def make_comparison_report(df_list, m_list, buf=None):
     """
     s = HTML_HEADER1.format("multiple channels")
     s += HTML_HEADER2
+    s += generate_plotlyjs_script()
+    s += generate_nav("Comparison report", [("summary", "Summary"), ("channels", "Channels"), ("plots", "Plots")])
+    s += "<main>\n"
 
-    s += f"<h1>Summary of {len(df_list)} datasets</h1>\n"
-    s += "<h2>Channels</h2>\n"
+    s += f'<h1 id="summary">Summary of {len(df_list)} datasets</h1>\n'
+    s += '<h2 id="channels">Channels</h2>\n'
     s += "<ul>\n"
     for m in m_list:
         s += f'<li>{m["device"]} ({m["uid"]}) Ch. {m.get("channel", 1)}: {m["experiment_description"]}</li>\n'
     s += "</ul>\n"
 
-    s += "<h2>Plots</h2>\n"
+    s += '<h2 id="plots">Plots</h2>\n'
 
     s += generate_multi_channel_plots(df_list, m_list)
 
+    s += "</main>\n"
     s += HTML_FOOTER
 
     if isinstance(buf, str):
@@ -238,34 +369,59 @@ def make_report(df, m, buf=None):
     :param m: metadata
     :param buf: file or path
     """
+    is_fireplate = m["device"].startswith("FirePlate")
+
+    sections = [("summary", "Summary"), ("settings", "Settings &amp; Calibration")]
+    if not is_fireplate:
+        sections.append(("status", "Status"))
+    sections.append(("plots", "Plots"))
+
     s = HTML_HEADER1.format(m["experiment_name"])
     s += HTML_HEADER2
-    s += "<h2>Summary</h2>\n"
+    s += generate_plotlyjs_script()
+    s += generate_nav(m["experiment_name"], sections)
+    s += "<main>\n"
+
+    s += '<h2 id="summary">Summary</h2>\n'
     s += generate_header(df, m) + "\n"
-    s += "<h2>Settings and Calibration</h2>\n"
-    if m["device"].startswith("FirePlate"):
-        s += pd.DataFrame(m["settings"], index=[0]).T.to_html(header=False) + "\n"
+
+    s += '<h2 id="settings">Settings and Calibration</h2>\n'
+    # collapsed by default for FirePlate reports: the per-well calibration table is huge
+    s += f'<details class="section"{"" if is_fireplate else " open"}>\n'
+    s += "<summary>Show settings and calibration</summary>\n"
+    if is_fireplate:
+        s += '<div class="table-wrap">' + pd.DataFrame(m["settings"], index=[0]).T.to_html(header=False) + "</div>\n"
         s += "<br>\n"
-        s += generate_calibration_table(m) + "\n"
+        s += '<div class="table-wrap">' + generate_calibration_table(m) + "</div>\n"
     else:
         s += "<div class=row>\n"
         s += "<div class=column>\n"
-        s += pd.DataFrame(m["settings"], index=[0]).T.to_html(header=False) + "\n"
+        s += '<div class="table-wrap">' + pd.DataFrame(m["settings"], index=[0]).T.to_html(header=False) + "</div>\n"
         s += "</div>\n"
         s += "<div class=column>\n"
-        s += generate_calibration_table(m) + "\n"
+        s += '<div class="table-wrap">' + generate_calibration_table(m) + "</div>\n"
         s += "</div>\n"
         s += "</div>\n"
-    if m["device"].startswith("FirePlate"):
+    s += "</details>\n"
+
+    if is_fireplate:
         s += generate_status_report_fireplate(df)
-        s += "<h2>Plots</h2>\n"
-        s += generate_animated_heatmap_for_fireplate(df)
-        s += generate_trace_plot_for_fireplate(df, plot_status=np.count_nonzero(df.filter(regex="status"))) + "\n"
+        s += '<h2 id="plots">Plots</h2>\n'
+        heatmap_html, heatmap_start_time = generate_animated_heatmap_for_fireplate(df)
+        trace_html, trace_n_rows = generate_trace_plot_for_fireplate(
+            df, plot_status=np.count_nonzero(df.filter(regex="status"))
+        )
+        s += heatmap_html
+        s += trace_html + "\n"
+        s += generate_heatmap_time_indicator_script(
+            heatmap_start_time, trace_n_rows, "fireplate-heatmap", "fireplate-trace"
+        )
     else:
         s += generate_status_report(df)
-        s += "<h2>Plots</h2>\n"
+        s += '<h2 id="plots">Plots</h2>\n'
         s += generate_plots(df, plot_status=np.count_nonzero(df.filter(regex="status"))) + "\n"
 
+    s += "</main>\n"
     s += HTML_FOOTER
     if isinstance(buf, str):
         with open(buf, "w", encoding="utf8") as f:
@@ -303,10 +459,10 @@ def generate_status_report(df: pd.DataFrame) -> str:
     counts = {k: v for k, v in counts.items() if v > 0}
     if len(counts):
         d = pd.DataFrame(counts, index=["Count"]).T
-        s = "<h2>Status Report</h2>\n"
-        return s + d.to_html() + "\n"
+        s = '<h2 id="status">Status Report</h2>\n'
+        return s + '<div class="table-wrap">' + d.to_html() + "</div>\n"
     else:
-        return "<h2>Status Report</h2>\nNo errors and warnings in status.\n"
+        return '<h2 id="status">Status Report</h2>\nNo errors and warnings in status.\n'
 
 
 def generate_calibration_table(m: dict) -> str:
@@ -348,7 +504,7 @@ def generate_header(df: pd.DataFrame, m: dict) -> str:
         "Experiment Duration": f"{days} days, {hours:0>2}:{minutes:0>2}:{seconds:0>2}",
         "Data Points": str(len(df)),
     }
-    return pd.DataFrame(d, index=[0]).T.dropna().to_html(header=False)
+    return '<div class="table-wrap">' + pd.DataFrame(d, index=[0]).T.dropna().to_html(header=False) + "</div>"
 
 
 def plot_analyte_to_subplot(df: pd.DataFrame, unit, fig, row: int, col: int, name=None, legendgroup="1"):
@@ -526,11 +682,16 @@ def generate_plots(
             analyte = a
             break
 
+    # Only reserve a temperature row if there is actually Pt100 data to show there, or if the
+    # analyte itself is optical temperature (which is drawn into that same row). Otherwise the
+    # row stayed reserved but empty whenever a device has no "sample_temperature" column.
+    show_temperature_row = (plot_temperature and "sample_temperature" in df.columns) or analyte == "optical_temperature"
+
     row = 1
     if plot_analyte and analyte:
         if analyte != "optical_temperature":  # only increment row if analyte is not temperature
             row += 1
-    if plot_temperature or analyte == "optical_temperature":  # reserve a row for temperature
+    if show_temperature_row:
         temperature_row = row
         row += 1
     if plot_status:
@@ -547,7 +708,7 @@ def generate_plots(
 
     if plot_analyte and analyte:
         plot_analyte_to_subplot(df, analyte, fig, 1, 1)
-    if plot_temperature:
+    if plot_temperature and show_temperature_row:
         plot_temperature_to_subplot(df, fig, temperature_row, 1)
     if plot_status:
         plot_status_to_subplot(df, fig, status_row, 1)
@@ -558,20 +719,52 @@ def generate_plots(
     if plot_comments:
         add_comments_to_plots(df, fig)
 
+    align_legends_to_subplots(fig)
+
     fig.update_layout(
         height=300 * row,  # width=600
-        legend_tracegroupgap=330,
         xaxis_showticklabels=True,
-        legend=dict(groupclick="toggleitem"),
+        hovermode="x unified",
+        hoversubplots="axis",
     )
 
     # add xticklabels back to every axes
     fig.update_layout(**{"xaxis{}_showticklabels".format(i): True for i in range(2, row)})
 
-    # Set x-axis title
-    fig.update_xaxes(title_text="")
+    # Set x-axis title and add a shared spike line across all subplots
+    fig.update_xaxes(title_text="", showspikes=True, spikemode="across", spikesnap="cursor", spikedash="dot")
 
-    return remove_duplicate_xdata(fig.to_html(full_html=False))
+    return remove_duplicate_xdata(fig.to_html(full_html=False, include_plotlyjs=False))
+
+
+def align_legends_to_subplots(fig, groupclick="toggleitem"):
+    """Give each subplot row its own legend, anchored to the top of that row.
+
+    Replaces the previous approach of nudging a single shared legend into place with
+    ``legend_tracegroupgap`` (which had to be re-tuned whenever trace counts or subplot
+    heights changed). Every trace is assigned to the legend matching its y-axis, and
+    that legend is positioned at the top-right of the corresponding subplot's domain.
+
+    :param fig: figure with subplots and traces already added
+    :param groupclick: legend groupclick behaviour, forwarded to every per-row legend
+    """
+    legend_updates = {}
+    for tr in fig.data:
+        suffix = tr.yaxis[1:] if tr.yaxis else ""  # "y" -> "", "y2" -> "2", ...
+        legend_name = f"legend{suffix}"
+        tr.legend = legend_name
+        if legend_name not in legend_updates:
+            domain_top = fig.layout[f"yaxis{suffix}"].domain[1]
+            legend_updates[legend_name] = dict(
+                yref="paper",
+                y=domain_top,
+                yanchor="top",
+                xref="paper",
+                x=1.02,
+                xanchor="left",
+                groupclick=groupclick,
+            )
+    fig.update_layout(**legend_updates)
 
 
 def add_comments_to_plots(df, fig):
@@ -626,7 +819,7 @@ def generate_status_report_fireplate(df: pd.DataFrame) -> str:
         return "<h2>Status Report</h2>\nNo errors and warnings in status.\n"
 
 
-def generate_animated_heatmap_for_fireplate(df, unit=None, bins=100):
+def generate_animated_heatmap_for_fireplate(df, unit=None, bins=100, div_id="fireplate-heatmap"):
     if unit is None:  # detect unit
         for a in (
             "oxygen_hPa",
@@ -660,7 +853,19 @@ def generate_animated_heatmap_for_fireplate(df, unit=None, bins=100):
     df2 = pd.concat(l).sort_index(kind="stable")
     df2["time [min]"] = (df2.index - df2.index[0]).total_seconds() / 60
     df2["time [min]"] = df2["time [min]"].round()
-    fig = px.scatter(df2, x="x", y="y", animation_frame="time [min]", color=unit, range_x=[-0.5, 11.5], range_y=[0, 8])
+    # range_color must be set explicitly: without it, plotly only auto-ranges the colorbar to the
+    # first animation frame's data, so the colorbar stops matching the marker colors once the
+    # slider moves to a later frame.
+    fig = px.scatter(
+        df2,
+        x="x",
+        y="y",
+        animation_frame="time [min]",
+        color=unit,
+        range_x=[-0.5, 11.5],
+        range_y=[0, 8],
+        range_color=[df2[unit].min(), df2[unit].max()],
+    )
     fig.update_traces(marker=dict(size=30))
     fig.update_yaxes(autorange="reversed")
     fig.update_layout(
@@ -679,7 +884,10 @@ def generate_animated_heatmap_for_fireplate(df, unit=None, bins=100):
         height=600,
         width=1200,
     )
-    return fig.to_html(full_html=False, auto_play=False)
+    # df2.index[0] is the reference the "time [min]" animation frames are offset from; the
+    # time indicator on the trace plot below needs the exact same reference to stay in sync,
+    # so it's handed back to the caller alongside the html.
+    return fig.to_html(full_html=False, auto_play=False, include_plotlyjs=False, div_id=div_id), df2.index[0]
 
 
 def plot_status_to_subplot_fireplate(df: pd.DataFrame, fig, row: int, col: int):
@@ -810,6 +1018,7 @@ def generate_trace_plot_for_fireplate(
     plot_raw: bool = True,
     plot_signal: bool = True,
     plot_ambient: bool = True,
+    div_id="fireplate-trace",
 ):
     # df = df.reset_index()
     # df.index = [i.strftime('%Y-%m-%d %H:%M:%S') for i in df.index]
@@ -887,7 +1096,6 @@ def generate_trace_plot_for_fireplate(
 
     fig.update_layout(
         height=300 * (row + 1),  # width=600
-        # legend_tracegroupgap=260,
         xaxis_showticklabels=True,
         legend=dict(groupclick="togglegroup"),
     )
@@ -895,10 +1103,98 @@ def generate_trace_plot_for_fireplate(
     # add xticklabels back to every axes
     fig.update_layout(**{"xaxis{}_showticklabels".format(i): True for i in range(2, row)})
 
-    # Set x-axis title
-    fig.update_xaxes(title_text="")
+    # Set x-axis title and add a shared spike line across all subplots. Not using
+    # hovermode="x unified" here: with up to 96 overlapping wells per subplot, a unified
+    # tooltip would list every visible well at once and become unreadable.
+    fig.update_xaxes(title_text="", showspikes=True, spikemode="across", spikesnap="cursor", spikedash="dot")
 
-    return remove_duplicate_xdata(fig.to_html(full_html=False))
+    # number of subplot rows is handed back so the heatmap time indicator (see
+    # generate_heatmap_time_indicator_script) knows how many per-row shapes to draw
+    return remove_duplicate_xdata(fig.to_html(full_html=False, include_plotlyjs=False, div_id=div_id)), row - 1
+
+
+def generate_heatmap_time_indicator_script(
+    start_time: pd.Timestamp, n_rows: int, heatmap_div_id: str, trace_div_id: str
+) -> str:
+    """Build a script that draws a vertical line on the fireplate trace plot marking the
+    time point currently shown by the animated heatmap above it.
+
+    The heatmap animates over a "time [min]" frame variable while the trace plot below uses
+    real timestamps, so the frame value has to be converted back to a timestamp using the same
+    reference point the heatmap used to compute "time [min]" in the first place (``start_time``).
+    The indicator is read-only: it follows the heatmap's slider/play state but does not itself
+    control it.
+
+    :param start_time: reference timestamp the heatmap's animation frames are offset from
+    :param n_rows: number of stacked subplot rows in the trace plot, one shape is drawn per row
+    :param heatmap_div_id: div id of the animated heatmap figure (its slider/frame events are observed)
+    :param trace_div_id: div id of the trace plot figure (the indicator shapes are drawn here)
+    """
+    import calendar
+
+    # calendar.timegm (unlike datetime.timestamp()) treats the given fields as UTC rather than
+    # the local system timezone, so this preserves the naive wall-clock value verbatim instead
+    # of shifting it by whatever timezone the report happens to be generated in.
+    start_ms = calendar.timegm(start_time.timetuple()) * 1000 + start_time.microsecond // 1000
+    return f"""\
+<script>
+(function() {{
+  var heatmapDiv = document.getElementById({heatmap_div_id!r});
+  var traceDiv = document.getElementById({trace_div_id!r});
+  if (!heatmapDiv || !traceDiv) return;
+
+  function pad(n, w) {{
+    w = w || 2;
+    n = String(n);
+    while (n.length < w) n = "0" + n;
+    return n;
+  }}
+
+  // Formats as "YYYY-MM-DD HH:MM:SS.mmm" using UTC getters, since the underlying timestamps
+  // are timezone-naive wall-clock values and must not be shifted by the browser's local zone.
+  function formatPlotlyDate(ms) {{
+    var d = new Date(ms);
+    return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()) + " " +
+      pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + ":" + pad(d.getUTCSeconds()) + "." + pad(d.getUTCMilliseconds(), 3);
+  }}
+
+  function updateIndicator(frameMinutes) {{
+    var xVal = formatPlotlyDate({start_ms} + frameMinutes * 60000);
+    var shapes = [];
+    for (var i = 0; i < {n_rows}; i++) {{
+      var suffix = i === 0 ? "" : String(i + 1);
+      shapes.push({{
+        type: "line",
+        xref: "x" + suffix,
+        yref: "y" + suffix + " domain",
+        x0: xVal, x1: xVal, y0: 0, y1: 1,
+        line: {{color: "#e6484a", width: 1.5}}
+      }});
+    }}
+    Plotly.relayout(traceDiv, {{shapes: shapes}});
+  }}
+
+  function frameNameToMinutes(name) {{
+    var v = parseFloat(name);
+    return isNaN(v) ? null : v;
+  }}
+
+  heatmapDiv.on("plotly_sliderchange", function(e) {{
+    if (!e || !e.step || !e.step.args) return;
+    var mins = frameNameToMinutes(e.step.args[0][0]);
+    if (mins !== null) updateIndicator(mins);
+  }});
+
+  heatmapDiv.on("plotly_animatingframe", function(e) {{
+    if (!e || !e.frame) return;
+    var mins = frameNameToMinutes(e.frame.name);
+    if (mins !== null) updateIndicator(mins);
+  }});
+
+  updateIndicator(0);
+}})();
+</script>
+"""
 
 
 def remove_duplicate_xdata(s: str):
