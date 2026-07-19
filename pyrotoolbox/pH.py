@@ -25,6 +25,16 @@ import datetime as dt
 import lmfit as lm
 
 
+drift_constants = {
+    "PK7":   {"d0": 6.0508e+08, "d1": 7.7907e+03},
+    "PK8":   {"d0": 4.3652e+10, "d1": 9.0761e+03},
+    "PK8T":  {"d0": 4.3652e+10, "d1": 9.0761e+03},
+    "PK6":   {"d0": 3.9569e+08, "d1": 7.5899e+03},
+    "PK65": {"d0": 3.1111e+05, "d1": 5.4952e+03},
+    "PK5":   {"d0": 3.2839e+03, "d1": 4.2170e+03},
+}
+
+
 def _calc_top_and_bottom(calibration: dict) -> tuple[float, float]:
     """Calculate top and bottom (upper and lower limit of the R value for 20°C).
 
