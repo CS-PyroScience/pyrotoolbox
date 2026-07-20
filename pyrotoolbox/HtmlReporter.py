@@ -306,7 +306,9 @@ def generate_multi_channel_plots(df_list: list, m_list: list, plot_raw: bool = T
                 legendgroup="raw",
             )
 
-        add_comments_to_plots(df, fig)
+    # comments are drawn once for the whole figure. A combined logfile repeats the same file-wide
+    # comment on every channel, so de-duplicate to avoid stacking identical vertical lines.
+    add_comments_to_plots(df_list, fig)
 
     align_legends_to_subplots(fig)
 
@@ -768,16 +770,29 @@ def align_legends_to_subplots(fig, groupclick="toggleitem"):
 
 
 def add_comments_to_plots(df, fig):
-    if "comment" not in df:
-        return
-    for x, text in df["comment"].dropna().items():
-        fig.add_vline(
-            x=x.to_pydatetime().timestamp() * 1000,
-            line_dash="dot",
-            row="all",
-            annotation_text=text,
-            annotation_position="top right",
-        )
+    """Draw the comments of one or several dataframes as vertical lines in the figure.
+
+    :param df: a single dataframe or a list of dataframes (e.g. the channels of a combined logfile). When
+        a list is passed the same comment appearing on several channels is only drawn once (at its first
+        occurrence), so file-wide comments do not stack into overlapping lines.
+    :param fig: the plotly figure to annotate
+    """
+    df_list = df if isinstance(df, (list, tuple)) else [df]
+    seen = set()
+    for df in df_list:
+        if "comment" not in df:
+            continue
+        for x, text in df["comment"].dropna().items():
+            if text in seen:
+                continue
+            seen.add(text)
+            fig.add_vline(
+                x=x.to_pydatetime().timestamp() * 1000,
+                line_dash="dot",
+                row="all",
+                annotation_text=text,
+                annotation_position="top right",
+            )
 
 
 ########################################################################################################################
@@ -1268,27 +1283,37 @@ def main():
             print(f'Skipping file "{path}"')
             continue
         print(f'Processing: "{path}"')
-        df, m = parse(path)
-        df = df.iloc[args.skipfirst : len(df) - args.skiplast]
-        if args.start_time:
-            df = df[args.start_time :]
-        if args.end_time:
-            df = df[: args.end_time]
-        if len(df) == 0:
-            print("No data to process. aborting file")
-            continue
-        df_list.append(df)
-        m_list.append(m)
+        result = parse(path)
+        # a combined logfile parses into a dict of {channel_id: (df, m)}; a regular file into (df, m)
+        if isinstance(result, dict):
+            channels = [(f" ({cid})", df, m) for cid, (df, m) in result.items()]
+        else:
+            channels = [("", result[0], result[1])]
 
-        if args.onlysummary:
-            continue
+        for suffix, df, m in channels:
+            if "settings" not in m:  # PT100 / temperature compensation channel - no report
+                continue
+            df = df.iloc[args.skipfirst : len(df) - args.skiplast]
+            if args.start_time:
+                df = df[args.start_time :]
+            if args.end_time:
+                df = df[: args.end_time]
+            if len(df) == 0:
+                print(f'No data to process. aborting "{path}"{suffix}')
+                continue
+            df_list.append(df)
+            m_list.append(m)
 
-        try:
-            with open(os.path.split(path)[-1][:-4] + "_report.html", "w", encoding="utf8") as f:
-                make_report(df, m, f)
-        except PermissionError:  # workaround for windows "open with"
-            with open(path[:-4] + "_report.html", "w", encoding="utf8") as f:
-                make_report(df, m, f)
+            if args.onlysummary:
+                continue
+
+            report_name = os.path.split(path)[-1][:-4] + suffix + "_report.html"
+            try:
+                with open(report_name, "w", encoding="utf8") as f:
+                    make_report(df, m, f)
+            except PermissionError:  # workaround for windows "open with"
+                with open(path[:-4] + suffix + "_report.html", "w", encoding="utf8") as f:
+                    make_report(df, m, f)
 
     if len(df_list) > 1:
         print(f"Processing summary")
