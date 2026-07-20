@@ -22,7 +22,9 @@ exclude = [
   "/.*",
   "/TODO.txt",
   "/Makefile",
-  "/doc",
+  "/CLAUDE.md",
+  "/FireResponse_autopyexe.json",
+  "/docs",
   "/tests",
   "/venv",
 ]
