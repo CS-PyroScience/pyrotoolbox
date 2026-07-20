@@ -43,4 +43,4 @@ Documentation = "https://pyrotoolbox.readthedocs.io/en/latest/"
 PyroHtmlReporter = "pyrotoolbox.HtmlReporter:main"
 
 [project.gui-scripts]
-FireResponse = "pyrotoolbox.FireResponse.FireResponse:main"
+FireResponse = "pyrotoolbox.FireResponse:main"
