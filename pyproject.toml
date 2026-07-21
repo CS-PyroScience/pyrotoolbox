@@ -22,9 +22,11 @@ exclude = [
   "/.*",
   "/TODO.txt",
   "/Makefile",
-  "/doc",
+  "/docs",
   "/tests",
   "/venv",
+  "/CLAUDE.md",
+  "/DOKUMENTATION.md",
 ]
 
 description = "Collection of tools for data processing of data collected with PyroScience devices."
