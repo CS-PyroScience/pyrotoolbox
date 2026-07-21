@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyrotoolbox"
-version = "1.14b"
+version = "1.16b"
 readme = "README.md"
 dependencies = [
     'pandas', 'numpy', 'plotly', 'lmfit'
@@ -22,6 +22,7 @@ exclude = [
   "/.*",
   "/TODO.txt",
   "/Makefile",
+  "/FireResponse_autopyexe.json",
   "/docs",
   "/tests",
   "/venv",
@@ -45,4 +46,4 @@ Documentation = "https://pyrotoolbox.readthedocs.io/en/latest/"
 PyroHtmlReporter = "pyrotoolbox.HtmlReporter:main"
 
 [project.gui-scripts]
-FireResponse = "pyrotoolbox.FireResponse.FireResponse:main"
+FireResponse = "pyrotoolbox.FireResponse:main"

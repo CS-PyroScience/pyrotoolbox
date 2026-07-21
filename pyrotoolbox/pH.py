@@ -20,8 +20,19 @@ The following functions are only valid for devices with Firmware >= 4.10 (releas
 """
 
 import numpy as np
+import pandas as pd
 import datetime as dt
 import lmfit as lm
+
+
+drift_constants = {
+    "PK7":   {"d0": 6.0508e+08, "d1": 7.7907e+03},
+    "PK8":   {"d0": 4.3652e+10, "d1": 9.0761e+03},
+    "PK8T":  {"d0": 4.3652e+10, "d1": 9.0761e+03},
+    "PK6":   {"d0": 3.9569e+08, "d1": 7.5899e+03},
+    "PK65": {"d0": 3.1111e+05, "d1": 5.4952e+03},
+    "PK5":   {"d0": 3.2839e+03, "d1": 4.2170e+03},
+}
 
 
 def _calc_top_and_bottom(calibration: dict) -> tuple[float, float]:
@@ -226,24 +237,26 @@ def calculate_pH_from_interpolated_calibration(R, temperature, salinity, calibra
 
     # fit both over time
     model = lm.Model(lambda x, k, d: k * x + d, independent_vars=["x"])
+    # epoch seconds, independent of the datetime64 resolution ("ns", "us", ...) backing R.index
+    x_seconds = (R.index - pd.Timestamp("1970-01-01")) / pd.Timedelta(seconds=1)
     # if len is 1 do not fit!
     # top
     fits = {}
     if len(date_top_dict) > 1:
         top_fit = model.fit(list(date_top_dict.values()), x=list(date_top_dict.keys()), k=-1e9, d=10)
-        top = top_fit.eval(x=R.index.values.astype(np.int64) / 1e9)
+        top = top_fit.eval(x=x_seconds)
         fits["top"] = top_fit
     else:
         top = list(date_top_dict.values())[0]
     if len(date_bottom_dict) > 1:
         bottom_fit = model.fit(list(date_bottom_dict.values()), x=list(date_bottom_dict.keys()), k=-1e9, d=10)
-        bottom = bottom_fit.eval(x=R.index.values.astype(np.int64) / 1e9)
+        bottom = bottom_fit.eval(x=x_seconds)
         fits["bottom"] = bottom_fit
     else:
         bottom = list(date_bottom_dict.values())[0]
     if len(date_offset_dict) > 1:
         offset_fit = model.fit(list(date_offset_dict.values()), x=list(date_offset_dict.keys()), k=-1e9, d=10)
-        offset = offset_fit.eval(x=R.index.values.astype(np.int64) / 1e9)
+        offset = offset_fit.eval(x=x_seconds)
         fits["offset"] = offset_fit
     else:
         offset = list(date_offset_dict.values())[0]
@@ -352,9 +365,9 @@ def _calc_bottom_prospective(bottom: float, temperature, time_days, d2: float, d
     for i in range(len(temperature) - 1):
         # calc dbottom
         t = np.mean([temperature.iloc[i], temperature.iloc[i + 1]])
-        dtop = d2 * np.exp(-d3 / (t + 273.15))
+        dbottom = d2 * np.exp(-d3 / (t + 273.15))
         # calc delta time in days
         delta_time = time_days[i + 1] - time_days[i]
 
-        bottom_list.append(bottom_list[-1] / np.exp(dtop * delta_time))
+        bottom_list.append(bottom_list[-1] + dbottom * delta_time)
     return np.array(bottom_list)

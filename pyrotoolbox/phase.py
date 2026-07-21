@@ -24,15 +24,6 @@ def cot(dPhi):
     return 1 / np.tan(np.radians(dPhi))
 
 
-def demudulation(tau, f):
-    """calculate demodulation
-
-    :param tau: lifetime in s
-    :param f: modulation frequency in Hz
-    """
-    return 1 / np.sqrt((2 * np.pi) ** 2 * tau**2)
-
-
 def calc_tau(dPhi, f):
     """calculate lifetime from phase angle and modulation frequency
 

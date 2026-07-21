@@ -21,9 +21,14 @@ The "parse" function is able to detect all possible input formats.
 The return is for all functions a dataframe containing the data and a dictionary containing the parsed metadata.
 Independent of the input format the columns and metadata-names should be identical. Other functions in this module
 expect these naming conventions.
+
+The one exception is "read_combined_workbench" which parses a combined Workbench logfile (the file next to the
+"ChannelData"/"MeasurementData" folder that holds all channels) and returns a dict mapping each channel to its own
+(DataFrame, metadata-dict).
 """
 
 import glob
+import io
 import sys
 
 import pandas as pd
@@ -37,8 +42,12 @@ CURRENT_WORKBENCH_VERSION = "1.5.4"
 CURRENT_DEVELOPERTOOL_VERSION = "162"
 
 
-def parse(fname: str) -> tuple[pd.DataFrame, dict]:
+def parse(fname: str) -> tuple[pd.DataFrame, dict] | dict[str, tuple[pd.DataFrame, dict]]:
     """Reads any pyroscience textfile. Not .pyr files! Returns a dataframe and a dict with metadata.
+
+    For a combined Workbench logfile (the file next to the "ChannelData"/"MeasurementData" folder that
+    holds all channels) a dict mapping each channel id to its own (DataFrame, metadata-dict) is returned
+    instead - see read_combined_workbench.
 
     :param fname: path to the textfile
     """
@@ -48,6 +57,8 @@ def parse(fname: str) -> tuple[pd.DataFrame, dict]:
     if "--- Experiment ---" in firstline or "--- System ---" in firstline:
         if "FirePlate" in nextthousand:
             return read_fireplate_workbench(fname)
+        if firstline.rstrip("\r\n").endswith("\t"):  # combined logfiles pad the header to full data width
+            return read_combined_workbench(fname)
         return read_workbench(fname)
     elif firstline.startswith("#Info	PyroSimpleLogger"):
         return read_developertool(fname)
@@ -67,17 +78,32 @@ def read_workbench(fname: str) -> tuple[pd.DataFrame, dict]:
     :param fname: file name of the logfile
     :return: (DataFrame, metadata-dict)
     """
+    with open(fname, "r", encoding="latin1") as f:
+        return _read_workbench_buffer(f)
+
+
+def _read_workbench_buffer(f) -> tuple[pd.DataFrame, dict]:
+    """Parses a single-channel Workbench logfile from an open text buffer.
+
+    Shared by read_workbench (real files) and read_combined_workbench (reconstructed per-channel
+    files in memory). The buffer must be seekable and already decoded (e.g. latin1 or io.StringIO).
+
+    :param f: open, seekable text buffer positioned at the start of the logfile
+    :return: (DataFrame, metadata-dict)
+    """
     # first load header lines
     lines = []
-    with open(fname, "r", encoding="latin1") as f:
-        for line in f:
-            if line.startswith("#"):
-                line = line[1:]
-            lines.append(line[:-1])
-            if len(lines) > 50:
-                break
-    if lines[0].endswith("\t"):  # might not be the best method, but should detect workbench summary files
-        raise ValueError('Pass a logfile for an individual channel (Found in "ChannelData").')
+    for line in f:
+        if line.startswith("#"):
+            line = line[1:]
+        lines.append(line[:-1])
+        if len(lines) > 50:
+            break
+    if lines[0].endswith("\t"):  # might not be the best method, but should detect workbench combined files
+        raise ValueError(
+            "This is a combined logfile. Use read_combined_workbench() or parse(). "
+            'Logfiles for individual channels are found in the "ChannelData"/"MeasurementData" folder.'
+        )
 
     metadata = {}
     l = 0
@@ -132,6 +158,7 @@ def read_workbench(fname: str) -> tuple[pd.DataFrame, dict]:
         if not match:
             raise ValueError("Unable to parse Channel information!")
         channel, sensor_type = match.groups()
+        sensor_type = sensor_type.split(" - ")[0].strip()  # e.g. "PT100 Temperature Sensor - Calibration offset ..."
         metadata["channel"] = channel
     else:  # non pt100 sensors
         channel, sensor_type, sensor_code = match.groups()
@@ -187,11 +214,11 @@ def read_workbench(fname: str) -> tuple[pd.DataFrame, dict]:
     else:
         raise ValueError("Unknown Sensor type: " + sensor_type)
 
+    f.seek(0)
     df = pd.read_csv(
-        fname,
+        f,
         skiprows=header + 1,
         skip_blank_lines=False,
-        encoding="latin1",
         usecols=usecols,
         sep="\t",
         na_values=[
@@ -267,6 +294,216 @@ def read_workbench(fname: str) -> tuple[pd.DataFrame, dict]:
     df.index.name = "date_time"
 
     return df, metadata
+
+
+def _group_combined_columns(header_cells: list[str]) -> tuple[dict[str, list[int]], list[int]]:
+    """Groups the columns of a combined-file data header row by channel.
+
+    Every data column of a combined logfile carries a bracket tag identifying its channel and role,
+    e.g. "Oxygen (%O2) [A Ch.1 Main]", "Sample Temp. (°C) [A Ch.1 CompT]" or "Sample Temp. (°C) [A T1]".
+    The trailing " Main"/" CompT"/" CompP" is dropped to obtain the channel id ("A Ch.1"); a tag without
+    such a suffix (a PT100 channel like "A T1") is its own id. The row ends with the comment columns
+    ("Date [Comment]", "Time [Comment]", "Comment").
+
+    :param header_cells: the tab-split cells of the data header row
+    :return: ({channel_id: [column indices]} in file order, [comment column indices])
+    """
+    channel_cols = {}
+    comment_cols = []
+    for i, cell in enumerate(header_cells):
+        cell = cell.strip()
+        if cell.endswith("]"):
+            tag = cell.rsplit("[", 1)[1][:-1].strip()  # e.g. "A Ch.1 Main" or "A T1"
+        else:
+            tag = None  # the bare "Comment" cell
+        if tag is None or tag == "Comment":
+            comment_cols.append(i)
+            continue
+        for suffix in (" Main", " CompT", " CompP"):
+            if tag.endswith(suffix):
+                tag = tag[: -len(suffix)]
+                break
+        channel_cols.setdefault(tag, []).append(i)
+    return channel_cols, comment_cols
+
+
+def _split_combined_header(header_lines: list[str]) -> tuple[list[str], dict[str, list[str]], dict[str, list[str]]]:
+    """Splits the '#' header block of a combined logfile into its reusable parts.
+
+    :param header_lines: the header lines (leading '#' already stripped, trailing tabs/newlines stripped),
+        up to but excluding the "--- Measurement Data ---" line
+    :return: (preamble_lines, {device_letter: instrument_lines}, {channel_id: channel_block_lines})
+        preamble_lines are the Experiment + System sections shared by every channel; instrument_lines is
+        the two-line "--- Instrument ---"/"Device: ..." block per device letter; channel_block_lines is
+        everything from a "--- Channel ---" line up to the next channel (Settings & Calibration and any
+        Temperature/Pressure Compensation sub-blocks).
+    """
+    # find the first instrument section - everything before is the shared preamble
+    first_instrument = next((i for i, l in enumerate(header_lines) if "--- Instrument ---" in l), len(header_lines))
+    preamble = header_lines[:first_instrument]
+
+    instruments = {}
+    channel_blocks = {}
+    current_channel = None
+    i = first_instrument
+    while i < len(header_lines):
+        line = header_lines[i]
+        if "--- Instrument ---" in line:
+            device_line = header_lines[i + 1]
+            if "FirePlate" in device_line:
+                raise ValueError(
+                    "Combined FirePlate logfiles are not supported by read_combined_workbench(). "
+                    "Use read_fireplate_workbench() on a per-group logfile."
+                )
+            match = re.search(r"\[([A-Z])\] ", device_line)
+            letter = match.group(1) if match else ""
+            instruments[letter] = [line, device_line]
+            current_channel = None
+            i += 2
+            continue
+        if "--- Channel ---" in line:
+            channel_line = header_lines[i + 1]
+            if channel_line.startswith("Group ["):
+                raise ValueError(
+                    "Combined FirePlate logfiles are not supported by read_combined_workbench(). "
+                    "Use read_fireplate_workbench() on a per-group logfile."
+                )
+            match = re.match(r"Channel \[([^\]]+)\]", channel_line)
+            if not match:
+                raise ValueError(f"Unable to parse channel header: {channel_line!r}")
+            current_channel = match.group(1).strip()
+            channel_blocks[current_channel] = [line, channel_line]
+            i += 2
+            continue
+        if current_channel is not None:
+            channel_blocks[current_channel].append(line)
+        i += 1
+
+    # if there is a single instrument without a parsable letter, use it for every channel
+    if len(instruments) == 1 and "" in instruments:
+        only = instruments[""]
+        instruments = {cid.split()[0]: only for cid in channel_blocks}
+    return preamble, instruments, channel_blocks
+
+
+def read_combined_workbench(fname: str) -> dict[str, tuple[pd.DataFrame, dict]]:
+    """Loads a combined Workbench logfile and parses every channel it contains.
+
+    The combined logfile is the file next to the "ChannelData"/"MeasurementData" folder that is named
+    like the measurement and holds all channels of all connected devices in a single table. Each channel
+    is parsed exactly like its individual per-channel logfile (see read_workbench).
+
+    :param fname: file name of the combined logfile
+    :return: dict mapping channel id (e.g. "A Ch.1", "A T1") to (DataFrame, metadata-dict). Each entry is
+        like read_workbench() output for the corresponding per-channel logfile, with one addition: a
+        "comment" column (as in read_developertool) holding the comments logged during the measurement,
+        each placed on the first sample at or after its timestamp. The same comments apply to every channel.
+    """
+    with open(fname, "r", encoding="latin1") as f:
+        raw_lines = f.readlines()
+
+    # split '#' header from the data header row
+    header_lines = []
+    data_header_idx = None
+    for i, line in enumerate(raw_lines):
+        if line.startswith("#"):
+            header_lines.append(line[1:].rstrip("\r\n").rstrip("\t"))
+        else:
+            data_header_idx = i
+            break
+    if data_header_idx is None:
+        raise ValueError("Could not find start of data in logfile")
+    if not raw_lines[0].rstrip("\r\n").endswith("\t"):
+        raise ValueError(
+            "This does not look like a combined logfile (header is not tab-padded). "
+            "Use read_workbench() for logfiles of an individual channel."
+        )
+    if "--- Measurement Data ---" not in header_lines[-1]:
+        raise ValueError("Could not find '--- Measurement Data ---' section in logfile")
+
+    # the "--- Measurement Data ---" line is needed for each reconstructed per-channel file
+    measurement_data_line = header_lines[-1]
+    header_lines = header_lines[:-1]
+
+    header_cells = raw_lines[data_header_idx].rstrip("\r\n").split("\t")
+    channel_cols, comment_cols = _group_combined_columns(header_cells)
+    preamble, instruments, channel_blocks = _split_combined_header(header_lines)
+
+    # read the whole data region once as strings, keeping every cell verbatim
+    data = pd.read_csv(
+        io.StringIO("".join(raw_lines[data_header_idx + 1 :])),
+        sep="\t",
+        header=None,
+        names=range(len(header_cells)),
+        dtype=str,
+        keep_default_na=False,
+        na_values=[],
+        skip_blank_lines=False,
+        index_col=False,
+    ).fillna("")
+
+    # parse comments (the same comments apply to every channel)
+    comment_times, comment_texts = [], []
+    if len(comment_cols) == 3:
+        c_date, c_time, c_comment = comment_cols
+        for _, row in data.iterrows():
+            text = row[c_comment].strip()
+            if not text:
+                continue
+            date, time = row[c_date].strip(), row[c_time].strip()
+            if not (date and time):
+                continue  # a comment without a timestamp cannot be placed on a channel timeline
+            comment_times.append(pd.to_datetime(date + " " + time, dayfirst=True))
+            comment_texts.append(text.strip('"'))
+    comment_times = pd.DatetimeIndex(comment_times)
+
+    result = {}
+    for cid, idxs in channel_cols.items():
+        letter = cid.split()[0]
+        if letter not in instruments:
+            raise ValueError(f"No instrument section found for channel {cid!r}")
+        if cid not in channel_blocks:
+            raise ValueError(f"No channel header block found for channel {cid!r}")
+
+        sub = data.iloc[:, idxs]
+        sub = sub[sub.iloc[:, 0] != ""]  # keep only rows where this channel actually sampled
+
+        buf = io.StringIO()
+        for line in (*preamble, *instruments[letter], *channel_blocks[cid], measurement_data_line):
+            buf.write(line + "\n")
+        buf.write("\t".join(header_cells[i] for i in idxs) + "\n")
+        sub.to_csv(buf, sep="\t", header=False, index=False, lineterminator="\n")
+        buf.seek(0)
+
+        df, m = _read_workbench_buffer(buf)
+        df["comment"] = _combined_comment_column(df.index, comment_times, comment_texts)
+        result[cid] = (df, m)
+
+    return result
+
+
+def _combined_comment_column(index, comment_times, comment_texts):
+    """Builds a comment column for one channel of a combined logfile.
+
+    Each comment is placed on the first sample at or after its timestamp, mirroring read_developertool
+    which exposes comments as an inline DataFrame column. Rows without a comment are NaN. If several
+    comments map to the same sample they are joined with newlines. Comments after the last sample are
+    dropped.
+
+    :param index: the DatetimeIndex of the channel
+    :param comment_times: DatetimeIndex of comment timestamps
+    :param comment_texts: list of comment strings (parallel to comment_times)
+    :return: object-dtype Series aligned to index
+    """
+    column = pd.Series(index=index, dtype="object")
+    if len(comment_times) and len(index):
+        positions = index.get_indexer(comment_times, method="backfill")  # next sample at or after the comment
+        for pos, text in zip(positions, comment_texts):
+            if pos == -1:
+                continue
+            current = column.iloc[pos]
+            column.iloc[pos] = text if pd.isna(current) else f"{current}\n{text}"
+    return column
 
 
 def _parse_workbench_settings(line1: str, line2: str) -> dict:
@@ -550,7 +787,10 @@ def read_fireplate_workbench(fname: str) -> tuple[pd.DataFrame, dict]:
     if sensor_type == "Oxygen Sensor":
         usecols = list(range(0, 3 + len(metadata["channels"]) * 5)) + [
             3 + len(metadata["channels"]) * 5 + 3,  # case temp
-            3 + len(metadata["channels"]) * 5 + 8 + 3 * int(metadata["settings"]["temperature"].startswith("Optical Temperature")),
+            3
+            + len(metadata["channels"]) * 5
+            + 8
+            + 3 * int(metadata["settings"]["temperature"].startswith("Optical Temperature")),
         ]
     elif sensor_type == "Optical Temperature Sensor":
         usecols = list(range(0, 3 + len(metadata["channels"]) * 5))
@@ -588,7 +828,9 @@ def read_fireplate_workbench(fname: str) -> tuple[pd.DataFrame, dict]:
             "<5",
         ],
     )
-    df.index = pd.to_datetime(df.iloc[:, 0] + " " + [i.replace(',', '.') for i in df.iloc[:, 1]], format='%d-%m-%Y %H:%M:%S.%f')
+    df.index = pd.to_datetime(
+        df.iloc[:, 0] + " " + [i.replace(",", ".") for i in df.iloc[:, 1]], format="%d-%m-%Y %H:%M:%S.%f"
+    )
     df.drop([df.columns[0], df.columns[1]], axis=1, inplace=True)
 
     def rename_column(column: str):
@@ -750,7 +992,9 @@ def read_developertool(fname: str) -> tuple[pd.DataFrame, dict]:
     df.index = pd.to_datetime(df.iloc[:, 0] + " " + df.iloc[:, 1].astype(str), format="%Y-%m-%d %H:%M:%S %f")
     df.drop([df.columns[0], df.columns[1]], axis=1, inplace=True)
 
-    df = (df.select_dtypes(exclude="object") / 1000).combine_first(df)  # to exclude 'comment' column
+    # to exclude 'comment' column. Sort columns alphabetically (by raw register name) for a stable,
+    # pandas-version-independent column order, since combine_first's own ordering isn't guaranteed.
+    df = (df.select_dtypes(exclude="object") / 1000).combine_first(df).sort_index(axis=1)
     df["status"] *= 1000
     if "R (0.000001)" in df.columns:
         df["R (0.000001)"] /= 1000
@@ -1182,15 +1426,17 @@ def read_aquaphoxlogger(fname: str) -> tuple[pd.DataFrame, dict]:
     )
     df.index = pd.to_datetime(df.iloc[:, 0])
     df.drop(df.columns[0], axis=1, inplace=True)
-    df = (df.select_dtypes(exclude="object") / 1000).combine_first(df)  # to exclude 'comment' column
+    # to exclude 'comment' column. combine_first's own column order isn't guaranteed, so restore the
+    # original (file) order explicitly.
+    df = (df.select_dtypes(exclude="object") / 1000).combine_first(df)[df.columns]
     df["status"] *= 1000
     if (
         metadata["settings"]["analyte"] == "pH"
         and metadata["firmware"].startswith("410")
         and "ldev (0.001 nm)" in df.columns
     ):  # workaround for wrong column name. Might not only be 410
-        df["R (10e-6)"] = df["ldev (0.001 nm)"] / 1000
-        del df["ldev (0.001 nm)"]
+        df.rename(columns={"ldev (0.001 nm)": "R (10e-6)"}, inplace=True)
+        df["R (10e-6)"] /= 1000
 
     rename_dict = {
         "Comment": "comment",

@@ -254,8 +254,8 @@ class Test_calculate_pH_with_prospective_drift_compensation(unittest.TestCase):
             d3=15352,
         )
 
-        self.assertAlmostEqual(pH.iloc[10], 7.257119238758446)
-        self.assertAlmostEqual(pH.iloc[-110], 7.890530189122995)
+        self.assertAlmostEqual(pH.iloc[10], 7.257119723834393)
+        self.assertAlmostEqual(pH.iloc[-110], 7.898803104359201)
 
 
 if __name__ == "__main__":
