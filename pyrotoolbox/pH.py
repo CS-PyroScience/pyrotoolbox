@@ -22,17 +22,47 @@ The following functions are only valid for devices with Firmware >= 4.10 (releas
 import numpy as np
 import pandas as pd
 import datetime as dt
-import lmfit as lm
 
 
 drift_constants = {
-    "PK7":   {"d0": 6.0508e+08, "d1": 7.7907e+03},
-    "PK8":   {"d0": 4.3652e+10, "d1": 9.0761e+03},
-    "PK8T":  {"d0": 4.3652e+10, "d1": 9.0761e+03},
-    "PK6":   {"d0": 3.9569e+08, "d1": 7.5899e+03},
-    "PK65": {"d0": 3.1111e+05, "d1": 5.4952e+03},
-    "PK5":   {"d0": 3.2839e+03, "d1": 4.2170e+03},
+    "PK7":   {"d0": 6.0508e+08, "d1": 7.7907e+03, "d2": 0, "d3": 0},
+    "PK8":   {"d0": 4.3652e+10, "d1": 9.0761e+03, "d2": 0, "d3": 0},
+    "PK8T":  {"d0": 4.3652e+10, "d1": 9.0761e+03, "d2": 0, "d3": 0},
+    "PK6":   {"d0": 3.9569e+08, "d1": 7.5899e+03, "d2": 0, "d3": 0},
+    "PK65": {"d0": 3.1111e+05, "d1": 5.4952e+03, "d2": 0, "d3": 0},
+    "PK5":   {"d0": 3.2839e+03, "d1": 4.2170e+03, "d2": 0, "d3": 0},
 }
+
+
+class LinearFit:
+    """Result of an unweighted least-squares fit of a straight line."""
+
+    def __init__(self, slope: float, intercept: float):
+        self.slope = slope
+        self.intercept = intercept
+
+    def eval(self, x):
+        """Evaluate the fitted line at x."""
+        return self.slope * np.asarray(x, dtype=float) + self.intercept
+
+    def __call__(self, x):
+        return self.eval(x)
+
+    def __repr__(self):
+        return f"LinearFit(slope={self.slope!r}, intercept={self.intercept!r})"
+
+
+def _linear_fit(x, y) -> LinearFit:
+    """Fit y = slope * x + intercept by unweighted least squares.
+
+    x is centered before fitting - the x-values are epoch seconds (~1e9) which would otherwise make the
+    fit badly conditioned - and the result is shifted back to the original x-axis.
+    """
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    x0 = x.mean()
+    slope, intercept = np.polyfit(x - x0, y, 1)
+    return LinearFit(slope, intercept - slope * x0)
 
 
 def _calc_top_and_bottom(calibration: dict) -> tuple[float, float]:
@@ -197,7 +227,7 @@ def calculate_pH_from_interpolated_calibration(R, temperature, salinity, calibra
     :param salinity: Single value or iterable with same length as df is required
     :param calibrations: dict in format {timestring: calib_data} e.g. {'2019-05-05 13:10:00': {pH1: 4, temp1: 22.08, ...}}, or a list of calibration-dicts
     :param R: overrides R values from df. Single value or iterable with same length as df is required
-    :param return_fits: return the fits of top, bottom and offset instead
+    :param return_fits: return the fits of top, bottom and offset instead (as :class:`LinearFit` objects)
     :return: calculated pH-values
 
     """
@@ -236,26 +266,25 @@ def calculate_pH_from_interpolated_calibration(R, temperature, salinity, calibra
             date_offset_dict[0] = calibrations[0]["offset"]
 
     # fit both over time
-    model = lm.Model(lambda x, k, d: k * x + d, independent_vars=["x"])
     # epoch seconds, independent of the datetime64 resolution ("ns", "us", ...) backing R.index
     x_seconds = (R.index - pd.Timestamp("1970-01-01")) / pd.Timedelta(seconds=1)
     # if len is 1 do not fit!
     # top
     fits = {}
     if len(date_top_dict) > 1:
-        top_fit = model.fit(list(date_top_dict.values()), x=list(date_top_dict.keys()), k=-1e9, d=10)
+        top_fit = _linear_fit(list(date_top_dict.keys()), list(date_top_dict.values()))
         top = top_fit.eval(x=x_seconds)
         fits["top"] = top_fit
     else:
         top = list(date_top_dict.values())[0]
     if len(date_bottom_dict) > 1:
-        bottom_fit = model.fit(list(date_bottom_dict.values()), x=list(date_bottom_dict.keys()), k=-1e9, d=10)
+        bottom_fit = _linear_fit(list(date_bottom_dict.keys()), list(date_bottom_dict.values()))
         bottom = bottom_fit.eval(x=x_seconds)
         fits["bottom"] = bottom_fit
     else:
         bottom = list(date_bottom_dict.values())[0]
     if len(date_offset_dict) > 1:
-        offset_fit = model.fit(list(date_offset_dict.values()), x=list(date_offset_dict.keys()), k=-1e9, d=10)
+        offset_fit = _linear_fit(list(date_offset_dict.keys()), list(date_offset_dict.values()))
         offset = offset_fit.eval(x=x_seconds)
         fits["offset"] = offset_fit
     else:

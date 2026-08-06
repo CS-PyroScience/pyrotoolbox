@@ -11,3 +11,17 @@ html report
 config.toml erstellen
 new name? -> pyrotoolbox
 unit conversions from hPa.
+
+thoughts on claude instructions
+    explain how drift coefficients can be selected
+    the end may be a measurement in ph2 caliration buffer. if it is a long experiment check for that and ask user if he wants to apply an interpolated drift compensation with this 
+    check for signal too low
+    check for sudden signal drops
+    check for status messages
+    check if the calibration was reasonably recent (within 2 days of start of the measurement). Not a no-go but noteworthy
+    check if settings are plausible
+    check if calibration is plausible (if sensorcode compare with that, otherwise ...)
+    check which calibration points were done
+        oxygen: upper points is sufficient. if low data is in dataset the low calibration would also be great 
+    check if a very long measurement without recalibration
+        different for ph and oxygen

@@ -175,6 +175,21 @@ HTML_HEADER2 = """\
     font-weight: 600;
     padding: 4px 0;
   }
+
+  .findings {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 4px;
+    padding: 4px 16px;
+  }
+
+  .findings :first-child {
+    margin-top: 0;
+  }
+
+  .findings :last-child {
+    margin-bottom: 0;
+  }
 </style>
 </head>
 <body>
@@ -213,23 +228,34 @@ def generate_nav(title: str, sections: list) -> str:
 """
 
 
-def generate_multi_channel_plots(df_list: list, m_list: list, plot_raw: bool = True):
+def generate_multi_channel_plots(df_list: list, m_list: list, plot_raw: bool = True, labels: list = None):
     """Create a report to combine the results from multiple channels.
 
     Only really useful if the channels have a very similar x-range.
 
     :param df_list: list of dataframe with the input data
     :param m_list: list of metadata
+    :param labels: optional list of custom trace name prefixes, one per dataset, overriding the
+        default "{device} ({uid}) Ch. {channel}" naming. Useful to distinguish datasets that would
+        otherwise share the same name, e.g. when comparing two drift corrections of the same data.
     """
+    if labels is not None and len(labels) != len(df_list):
+        raise ValueError("labels must have the same length as df_list")
+
+    def label(idx, m):
+        return labels[idx] if labels is not None else f'{m["device"]} ({m["uid"]}) Ch. {m.get("channel", 1)}'
+
     # find the number of analyte units. -> go through all dfs and make a list
     # check if any status problems occurred. -> if so add status plot, else add statement that nothing bad happened
     analytes = []
     status_errors = False
     df_list_o2_pH = []
     m_list_o2_pH = []
+    idx_o2_pH = []
     df_list_optT = []
     m_list_optT = []
-    for df, m in zip(df_list, m_list):
+    idx_optT = []
+    for idx, (df, m) in enumerate(zip(df_list, m_list)):
         for a in (
             "oxygen_hPa",
             "oxygen_torr",
@@ -244,11 +270,13 @@ def generate_multi_channel_plots(df_list: list, m_list: list, plot_raw: bool = T
             if a in [i[4:] for i in df.columns] or a in df.columns:
                 df_list_o2_pH.append(df)
                 m_list_o2_pH.append(m)
+                idx_o2_pH.append(idx)
                 analytes.append(a)
                 break
             elif "optical_temperature" in [i[4:] for i in df.columns] or "optical_temperature" in df.columns:
                 df_list_optT.append(df)
                 m_list_optT.append(m)
+                idx_optT.append(idx)
                 break
         if not status_errors and sum(df["status"]) > 0:
             status_errors = True
@@ -261,30 +289,28 @@ def generate_multi_channel_plots(df_list: list, m_list: list, plot_raw: bool = T
 
     fig = make_subplots(rows=rows, cols=1, shared_xaxes=True, vertical_spacing=0.03)
 
-    for analyte, df, m in zip(analytes, df_list_o2_pH, m_list_o2_pH):
+    for analyte, df, m, idx in zip(analytes, df_list_o2_pH, m_list_o2_pH, idx_o2_pH):
         i = used_analytes.index(analyte)
-        plot_analyte_to_subplot(
-            df, analyte, fig, i + 1, 1, name=f'{m["device"]} ({m["uid"]}) Ch. {m.get("channel", 1)}', legendgroup=str(i)
-        )
+        plot_analyte_to_subplot(df, analyte, fig, i + 1, 1, name=label(idx, m), legendgroup=str(i))
 
-    for df, m in zip(df_list_optT, m_list_optT):
+    for df, m, idx in zip(df_list_optT, m_list_optT, idx_optT):
         plot_analyte_to_subplot(
             df,
             "optical_temperature",
             fig,
             analyte_rows + 1,
             1,
-            name=f'{m["device"]} ({m["uid"]}) Ch. {m["channel"]} optT',
+            name=f"{label(idx, m)} optT",
             legendgroup="T",
         )
 
-    for df, m in zip(df_list, m_list):
+    for idx, (df, m) in enumerate(zip(df_list, m_list)):
         plot_temperature_to_subplot(
             df,
             fig,
             analyte_rows + 1,
             1,
-            name=f'{m["device"]} ({m["uid"]}) Ch. {m.get("channel", 1)} Pt100',
+            name=f"{label(idx, m)} Pt100",
             legendgroup="T",
         )
         if status_errors:
@@ -293,7 +319,7 @@ def generate_multi_channel_plots(df_list: list, m_list: list, plot_raw: bool = T
                 fig,
                 analyte_rows + 2,
                 1,
-                name_prefix=f'{m["device"]} ({m["uid"]}) Ch. {m.get("channel", 1)} ',
+                name_prefix=f"{label(idx, m)} ",
                 legendgroup="status",
             )
         if plot_raw:
@@ -302,7 +328,7 @@ def generate_multi_channel_plots(df_list: list, m_list: list, plot_raw: bool = T
                 fig,
                 analyte_rows + 2 + int(status_errors),
                 1,
-                name=f'{m["device"]} ({m["uid"]}) Ch. {m.get("channel", 1)} ',
+                name=f"{label(idx, m)} ",
                 legendgroup="raw",
             )
 
@@ -328,29 +354,48 @@ def generate_multi_channel_plots(df_list: list, m_list: list, plot_raw: bool = T
     return remove_duplicate_xdata(fig.to_html(full_html=False, include_plotlyjs=False))
 
 
-def make_comparison_report(df_list, m_list, buf=None):
+def make_comparison_report(df_list, m_list, buf=None, labels: list = None, findings: str = None):
     """Create a html report for the given dataframes and metadata.
 
     :param df_list: list of dataframes with the input data
     :param m_list: list of metadata
     :param buf: file or path
+    :param labels: optional list of custom trace names, one per dataset, overriding the default
+        "{device} ({uid}) Ch. {channel}" naming. Useful to distinguish datasets that would
+        otherwise share the same name, e.g. when comparing two drift corrections of the same data.
+    :param findings: optional HTML snippet inserted as a "Findings" section right after the summary,
+        e.g. for notes written by a person or an AI agent that analysed the data ("low signal on
+        channel 2", "calibration was too old", ...). Passed through as raw HTML, not escaped - wrap
+        plain text in <p> tags, use <ul>/<li> for lists, <strong> for emphasis etc.
     """
+    if labels is not None and len(labels) != len(df_list):
+        raise ValueError("labels must have the same length as df_list")
+
+    sections = [("summary", "Summary")]
+    if findings:
+        sections.append(("findings", "Findings"))
+    sections += [("channels", "Channels"), ("plots", "Plots")]
+
     s = HTML_HEADER1.format("multiple channels")
     s += HTML_HEADER2
     s += generate_plotlyjs_script()
-    s += generate_nav("Comparison report", [("summary", "Summary"), ("channels", "Channels"), ("plots", "Plots")])
+    s += generate_nav("Comparison report", sections)
     s += "<main>\n"
 
     s += f'<h1 id="summary">Summary of {len(df_list)} datasets</h1>\n'
+    if findings:
+        s += '<h2 id="findings">Findings</h2>\n'
+        s += f'<div class="findings">{findings}</div>\n'
     s += '<h2 id="channels">Channels</h2>\n'
     s += "<ul>\n"
-    for m in m_list:
-        s += f'<li>{m["device"]} ({m["uid"]}) Ch. {m.get("channel", 1)}: {m["experiment_description"]}</li>\n'
+    for i, m in enumerate(m_list):
+        label = labels[i] if labels is not None else f'{m["device"]} ({m["uid"]}) Ch. {m.get("channel", 1)}'
+        s += f'<li>{label}: {m["experiment_description"]}</li>\n'
     s += "</ul>\n"
 
     s += '<h2 id="plots">Plots</h2>\n'
 
-    s += generate_multi_channel_plots(df_list, m_list)
+    s += generate_multi_channel_plots(df_list, m_list, labels=labels)
 
     s += "</main>\n"
     s += HTML_FOOTER
@@ -364,16 +409,23 @@ def make_comparison_report(df_list, m_list, buf=None):
         return s
 
 
-def make_report(df, m, buf=None):
+def make_report(df, m, buf=None, findings: str = None):
     """Create a html report for the given dataframe and metadata.
 
     :param df: dataframe with the input data
     :param m: metadata
     :param buf: file or path
+    :param findings: optional HTML snippet inserted as a "Findings" section right after the summary,
+        e.g. for notes written by a person or an AI agent that analysed the data ("low signal on
+        channel 2", "calibration was too old", ...). Passed through as raw HTML, not escaped - wrap
+        plain text in <p> tags, use <ul>/<li> for lists, <strong> for emphasis etc.
     """
     is_fireplate = m["device"].startswith("FirePlate")
 
-    sections = [("summary", "Summary"), ("settings", "Settings &amp; Calibration")]
+    sections = [("summary", "Summary")]
+    if findings:
+        sections.append(("findings", "Findings"))
+    sections.append(("settings", "Settings &amp; Calibration"))
     if not is_fireplate:
         sections.append(("status", "Status"))
     sections.append(("plots", "Plots"))
@@ -386,6 +438,10 @@ def make_report(df, m, buf=None):
 
     s += '<h2 id="summary">Summary</h2>\n'
     s += generate_header(df, m) + "\n"
+
+    if findings:
+        s += '<h2 id="findings">Findings</h2>\n'
+        s += f'<div class="findings">{findings}</div>\n'
 
     s += '<h2 id="settings">Settings and Calibration</h2>\n'
     # collapsed by default for FirePlate reports: the per-well calibration table is huge
