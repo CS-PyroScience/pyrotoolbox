@@ -239,6 +239,7 @@ def _read_workbench_buffer(f) -> tuple[pd.DataFrame, dict]:
         ],
     )
     df.index = pd.to_datetime(df.iloc[:, 0] + " " + df.iloc[:, 1], dayfirst=True)
+    df.sort_index(inplace=True)  # fix for workbench bug. Sometimes timestamps are not sorted
     df.drop([df.columns[0], df.columns[1]], axis=1, inplace=True)
     df.columns = [c.split(" [")[0].strip() for c in df.columns]  # cut off e.g. [A Ch.1 Main]
 
@@ -831,6 +832,7 @@ def read_fireplate_workbench(fname: str) -> tuple[pd.DataFrame, dict]:
     df.index = pd.to_datetime(
         df.iloc[:, 0] + " " + [i.replace(",", ".") for i in df.iloc[:, 1]], format="%d-%m-%Y %H:%M:%S.%f"
     )
+    df.sort_index(inplace=True)  # fix for workbench bug. Sometimes timestamps are not sorted
     df.drop([df.columns[0], df.columns[1]], axis=1, inplace=True)
 
     def rename_column(column: str):
@@ -990,6 +992,7 @@ def read_developertool(fname: str) -> tuple[pd.DataFrame, dict]:
         dtype={"Comment": "object", "Fraction of Second (ms)": "string"},
     )
     df.index = pd.to_datetime(df.iloc[:, 0] + " " + df.iloc[:, 1].astype(str), format="%Y-%m-%d %H:%M:%S %f")
+    df.sort_index(inplace=True)  # fix for workbench bug. Sometimes timestamps are not sorted
     df.drop([df.columns[0], df.columns[1]], axis=1, inplace=True)
 
     # to exclude 'comment' column. Sort columns alphabetically (by raw register name) for a stable,
@@ -1425,6 +1428,7 @@ def read_aquaphoxlogger(fname: str) -> tuple[pd.DataFrame, dict]:
         na_values=["-300000"],
     )
     df.index = pd.to_datetime(df.iloc[:, 0])
+    df.sort_index(inplace=True)  # fix for workbench bug. Sometimes timestamps are not sorted
     df.drop(df.columns[0], axis=1, inplace=True)
     # to exclude 'comment' column. combine_first's own column order isn't guaranteed, so restore the
     # original (file) order explicitly.
@@ -1591,6 +1595,7 @@ def read_fsgo2(fname: str) -> tuple[pd.DataFrame, dict]:
         na_values=["--,---", "no sensor"],
     )
     df.index = pd.to_datetime(df.iloc[:, 0])
+    df.sort_index(inplace=True)  # fix for workbench bug. Sometimes timestamps are not sorted
     df.drop(df.columns[0], axis=1, inplace=True)
 
     rename_dict = {
@@ -1766,6 +1771,7 @@ def read_fdo2_logger(fname: str) -> tuple[pd.DataFrame, dict]:
         fname, skiprows=header, encoding="latin1", sep="\t", decimal=decimal, skip_blank_lines=False, index_col=False
     )
     df.index = pd.to_datetime(df.iloc[:, 0])
+    df.sort_index(inplace=True)  # fix for workbench bug. Sometimes timestamps are not sorted
     df.drop(df.columns[0], axis=1, inplace=True)
 
     rename_dict = {
